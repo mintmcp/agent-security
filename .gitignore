@@ -1,0 +1,14 @@
+.claude/settings.local.json
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.bak
+*.bak[0-9]
+test-env.txt

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeReadFile": [
+      {
+        "command": "python3 ./secrets_scanner_hook.py --mode=pre"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "python3 ./secrets_scanner_hook.py --mode=pre"
+      }
+    ]
+  }
+}

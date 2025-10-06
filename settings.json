@@ -1,0 +1,45 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ./secrets_scanner_hook.py --mode=pre --client=claude_code"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ./secrets_scanner_hook.py --mode=pre --client=claude_code"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ./secrets_scanner_hook.py --mode=post --client=claude_code"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ./secrets_scanner_hook.py --mode=post --client=claude_code"
+          }
+        ]
+      }
+    ]
+  }
+}
