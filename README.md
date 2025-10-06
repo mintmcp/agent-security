@@ -61,21 +61,21 @@ A secret scanning hook that helps prevent sensitive credentials from being expos
 
 ### Cursor
 
-1. **Copy files to project root:**
+1. **Copy the hook script:**
    ```bash
-   cp secrets_scanner_hook.py hooks.json .
+   cp secrets_scanner_hook.py ~/.cursor/
    ```
 
-2. **The `hooks.json` is pre-configured:**
+2. **Create `~/.cursor/hooks.json`:**
    ```json
    {
      "version": 1,
      "hooks": {
        "beforeReadFile": [{
-         "command": "python3 ./secrets_scanner_hook.py --mode=pre --client=cursor"
+         "command": "python3 ~/.cursor/secrets_scanner_hook.py --mode=pre --client=cursor"
        }],
        "beforeSubmitPrompt": [{
-         "command": "python3 ./secrets_scanner_hook.py --mode=pre --client=cursor"
+         "command": "python3 ~/.cursor/secrets_scanner_hook.py --mode=pre --client=cursor"
        }]
      }
    }
