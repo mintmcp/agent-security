@@ -22,7 +22,7 @@ __all__ = [
     "console_main_cursor",
 ]
 
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 
 # -----------------------------------------------------------------------------
 # Configuration and Patterns
@@ -501,4 +501,3 @@ def console_main_cursor():
 
 if __name__ == "__main__":
     main()
-
