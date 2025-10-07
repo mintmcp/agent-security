@@ -26,7 +26,7 @@ __all__ = [
     "console_main_cursor",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 MAX_SCAN_BYTES = 5 * 1024 * 1024  # 5MB safety cap per file
 SAMPLE_BYTES = 4096  # bytes sampled to determine if a file looks binary
