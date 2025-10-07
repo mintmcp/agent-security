@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-secret-scan"
+version = "0.1.0"
+description = "Secret scanning hooks for Claude Code and Cursor with zero dependencies."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Claude Secret Scanner Maintainers"}
+]
+keywords = [
+  "secrets",
+  "security",
+  "claude",
+  "cursor",
+  "hooks"
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[project.urls]
+Homepage = "https://github.com/mintmcp/secrets-scanner"
+Issues = "https://github.com/mintmcp/secrets-scanner/issues"
+Source = "https://github.com/mintmcp/secrets-scanner"
+
+[project.scripts]
+claude-secret-scan = "secrets_scanner_hook:console_main"
+claude-secret-scan-claude = "secrets_scanner_hook:console_main_claude"
+cursor-secret-scan = "secrets_scanner_hook:console_main_cursor"
+
+[tool.setuptools]
+py-modules = ["secrets_scanner_hook"]

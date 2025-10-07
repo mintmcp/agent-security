@@ -18,6 +18,16 @@ Cursor formats:
 
 import sys, json, os, re, argparse
 
+__all__ = [
+    "__version__",
+    "main",
+    "console_main",
+    "console_main_claude",
+    "console_main_cursor",
+]
+
+__version__ = "0.1.0"
+
 MAX_SCAN_BYTES = 5 * 1024 * 1024  # 5MB safety cap per file
 SAMPLE_BYTES = 4096  # bytes sampled to determine if a file looks binary
 
@@ -692,18 +702,52 @@ def run_post_hook(client_override=None):
 # MAIN ENTRY POINT
 # ============================================================================
 
-def main():
-    parser = argparse.ArgumentParser(description='Read hook for secret scanning')
-    parser.add_argument('--mode', choices=['pre', 'post'], required=True,
-                        help='Hook mode: pre (before read) or post (after read)')
-    parser.add_argument('--client', choices=['claude_code', 'cursor'], default=None,
-                        help='Client type: claude_code or cursor (auto-detect if not specified)')
-    args = parser.parse_args()
+def _build_cli_parser():
+    parser = argparse.ArgumentParser(
+        description="Secret scanner hook for Claude Code and Cursor."
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["pre", "post"],
+        required=True,
+        help="Hook mode: pre (before read) or post (after read)",
+    )
+    parser.add_argument(
+        "--client",
+        choices=["claude_code", "cursor"],
+        default=None,
+        help="Client type (auto-detect if omitted)",
+    )
+    return parser
 
-    if args.mode == 'pre':
+
+def main(argv=None, *, default_client=None):
+    parser = _build_cli_parser()
+    if argv is not None:
+        args = parser.parse_args(argv)
+    else:
+        args = parser.parse_args()
+
+    if default_client and args.client is None:
+        args.client = default_client
+
+    if args.mode == "pre":
         run_pre_hook(args.client)
-    elif args.mode == 'post':
+    elif args.mode == "post":
         run_post_hook(args.client)
+
+
+def console_main():
+    main()
+
+
+def console_main_claude():
+    main(default_client="claude_code")
+
+
+def console_main_cursor():
+    main(default_client="cursor")
+
 
 if __name__ == "__main__":
     main()

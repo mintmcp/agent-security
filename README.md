@@ -15,28 +15,31 @@ A secret scanning hook that helps prevent sensitive credentials from being expos
 
 ## 🚀 Quick Start
 
+### Install
+
+- Recommended (isolated): `pipx install claude-secret-scan`
+- User-level install: `python3 -m pip install --user claude-secret-scan`
+- Manual fallback: copy `secrets_scanner_hook.py` into the client config directory (see notes below).
+
+Use `claude-secret-scan` for auto-detection, `claude-secret-scan-claude` to force Claude Code, and `cursor-secret-scan` to force Cursor formatting.
+
 ### Claude Code
 
-1. **Copy the hook script:**
-   ```bash
-   cp secrets_scanner_hook.py ~/.claude/
-   ```
-
-2. **Add to `~/.claude/settings.json`:**
+1. **Add to `~/.claude/settings.json`:**
    ```json
    {
      "hooks": {
        "UserPromptSubmit": [{
          "hooks": [{
            "type": "command",
-           "command": "python3 ~/.claude/secrets_scanner_hook.py --mode=pre --client=claude_code"
+           "command": "claude-secret-scan-claude --mode=pre"
          }]
        }],
        "PreToolUse": [{
          "matcher": "Read|read",
          "hooks": [{
            "type": "command",
-           "command": "python3 ~/.claude/secrets_scanner_hook.py --mode=pre --client=claude_code"
+           "command": "claude-secret-scan-claude --mode=pre"
          }]
        }],
        "PostToolUse": [
@@ -44,14 +47,14 @@ A secret scanning hook that helps prevent sensitive credentials from being expos
            "matcher": "Read|read",
            "hooks": [{
              "type": "command",
-             "command": "python3 ~/.claude/secrets_scanner_hook.py --mode=post --client=claude_code"
+             "command": "claude-secret-scan-claude --mode=post"
            }]
          },
          {
            "matcher": "Bash|bash",
            "hooks": [{
              "type": "command",
-             "command": "python3 ~/.claude/secrets_scanner_hook.py --mode=post --client=claude_code"
+             "command": "claude-secret-scan-claude --mode=post"
            }]
          }
        ]
@@ -61,27 +64,22 @@ A secret scanning hook that helps prevent sensitive credentials from being expos
 
 ### Cursor
 
-1. **Copy the hook script:**
-   ```bash
-   cp secrets_scanner_hook.py ~/.cursor/
-   ```
-
-2. **Create `~/.cursor/hooks.json`:**
+1. **Create `~/.cursor/hooks.json`:**
    ```json
    {
-     "version": 1,
-     "hooks": {
-       "beforeReadFile": [{
-         "command": "python3 ~/.cursor/secrets_scanner_hook.py --mode=pre --client=cursor"
-       }],
-       "beforeSubmitPrompt": [{
-         "command": "python3 ~/.cursor/secrets_scanner_hook.py --mode=pre --client=cursor"
-       }]
-     }
+      "version": 1,
+      "hooks": {
+        "beforeReadFile": [{
+         "command": "cursor-secret-scan --mode=pre"
+        }],
+        "beforeSubmitPrompt": [{
+         "command": "cursor-secret-scan --mode=pre"
+        }]
+      }
    }
    ```
 
-3. **Restart Cursor** and verify hooks are loaded in Settings → Hooks
+2. **Restart Cursor** and verify hooks are loaded in Settings → Hooks
 
 ## 📋 How It Works
 
@@ -203,6 +201,10 @@ PATTERNS = {
 python3 read_hook_test.py --suite extended
 ```
 
+### Manual Installation
+
+If you prefer not to use `pip` or `pipx`, copy `secrets_scanner_hook.py` into the appropriate client directory and update the JSON examples above to point to `python3 ~/.claude/secrets_scanner_hook.py ...` (Claude Code) or `python3 ~/.cursor/secrets_scanner_hook.py ...` (Cursor).
+
 ### Tool Matchers (Claude Code)
 
 Customize which tools trigger scanning by updating matchers in `settings.json`:
@@ -223,6 +225,7 @@ Customize which tools trigger scanning by updating matchers in `settings.json`:
 ├── secrets_scanner_hook.py   # Main hook script (works with both clients)
 ├── settings.json              # Claude Code hook configuration
 ├── hooks.json                 # Cursor hook configuration
+├── pyproject.toml             # Packaging metadata for PyPI
 ├── read_hook_test.py          # Comprehensive test suite
 ├── test-env.txt               # Test file with sample secrets
 └── README.md                  # This file
@@ -248,6 +251,15 @@ Customize which tools trigger scanning by updating matchers in `settings.json`:
 - **Python**: 3.7+ (no external dependencies)
 - **Claude Code**: Latest version with hooks support
 - **Cursor**: Hook system enabled
+
+## 🚢 Publishing
+
+1. Bump the version in both `pyproject.toml` and `secrets_scanner_hook.py` (`__version__`).
+2. Run the test suites: `python3 read_hook_test.py --suite all`.
+3. Build artifacts: `python3 -m pip install --upgrade build twine` then `python3 -m build`.
+4. Verify packages: `python3 -m twine check dist/*` and optionally `pipx install --spec dist/claude_secret_scan-<version>-py3-none-any.whl --suffix test`.
+5. Upload to PyPI: `python3 -m twine upload dist/*` (or `--repository testpypi` for dry-runs).
+6. Tag the release and attach the wheel/sdist to the GitHub release for checksum verification (`shasum -a 256 dist/*`).
 
 ## 🤝 Contributing
 
