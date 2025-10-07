@@ -41,8 +41,9 @@ Issues = "https://github.com/mintmcp/secrets-scanner/issues"
 Source = "https://github.com/mintmcp/secrets-scanner"
 
 [project.scripts]
-claude-secret-scan = "secrets_scanner_hook:console_main_claude"
-cursor-secret-scan = "secrets_scanner_hook:console_main_cursor"
+claude-secret-scan = "secrets_scanner.cli:console_main_claude"
+cursor-secret-scan = "secrets_scanner.cli:console_main_cursor"
 
 [tool.setuptools]
+packages = ["secrets_scanner"]
 py-modules = ["secrets_scanner_hook"]

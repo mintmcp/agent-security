@@ -101,7 +101,7 @@ Representative secret classes:
 - Payments: Stripe, Square, Shopify credentials.
 - Miscellaneous: npm and PyPI tokens, Twilio credentials, JWTs, PEM/OpenSSH/PGP private keys.
 
-See `PATTERNS` inside `secrets_scanner_hook.py` for the complete set.
+See `PATTERNS` in `secrets_scanner/patterns.py` for the complete set.
 
 ## Configuration Notes
 

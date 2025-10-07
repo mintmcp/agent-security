@@ -748,6 +748,30 @@ def console_main_claude():
 def console_main_cursor():
     main(default_client="cursor")
 
+# --- Simplified wrapper to forward to package CLI ---
+try:
+    from secrets_scanner.cli import (
+        main as _pkg_main,
+        console_main as _pkg_console_main,
+        console_main_claude as _pkg_console_main_claude,
+        console_main_cursor as _pkg_console_main_cursor,
+    )
+
+    def main(argv=None, *, default_client=None):
+        return _pkg_main(argv, default_client=default_client)
+
+    def console_main():
+        return _pkg_console_main()
+
+    def console_main_claude():
+        return _pkg_console_main_claude()
+
+    def console_main_cursor():
+        return _pkg_console_main_cursor()
+except Exception:
+    # If package is unavailable, fall back to legacy implementation above.
+    pass
+
 
 if __name__ == "__main__":
     main()
