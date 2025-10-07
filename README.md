@@ -258,7 +258,7 @@ Customize which tools trigger scanning by updating matchers in `settings.json`:
 2. Run the test suites: `python3 read_hook_test.py --suite all`.
 3. Build artifacts: `python3 -m pip install --upgrade build twine` then `python3 -m build`.
 4. Verify packages: `python3 -m twine check dist/*` and optionally `pipx install --spec dist/claude_secret_scan-<version>-py3-none-any.whl --suffix test`.
-5. Upload to PyPI: `python3 -m twine upload dist/*` (or `--repository testpypi` for dry-runs).
+5. Upload to PyPI: `python3 -m twine upload dist/*` (or push a `vX.Y.Z` tag to trigger the GitHub Actions publish job after storing `PYPI_API_TOKEN` in repo secrets).
 6. Tag the release and attach the wheel/sdist to the GitHub release for checksum verification (`shasum -a 256 dist/*`).
 
 ## 🤝 Contributing
