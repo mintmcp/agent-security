@@ -21,7 +21,7 @@ A secret scanning hook that helps prevent sensitive credentials from being expos
 - User-level install: `python3 -m pip install --user claude-secret-scan`
 - Manual fallback: copy `secrets_scanner_hook.py` into the client config directory (see notes below).
 
-Use `claude-secret-scan` for auto-detection, `claude-secret-scan-claude` to force Claude Code, and `cursor-secret-scan` to force Cursor formatting.
+Use `claude-secret-scan` for auto-detection (provide `--client=claude_code` to force Claude Code formatting) and `cursor-secret-scan` to force Cursor formatting.
 
 ### Claude Code
 
@@ -32,14 +32,14 @@ Use `claude-secret-scan` for auto-detection, `claude-secret-scan-claude` to forc
        "UserPromptSubmit": [{
          "hooks": [{
            "type": "command",
-           "command": "claude-secret-scan-claude --mode=pre"
+           "command": "claude-secret-scan --mode=pre --client=claude_code"
          }]
        }],
        "PreToolUse": [{
          "matcher": "Read|read",
          "hooks": [{
            "type": "command",
-           "command": "claude-secret-scan-claude --mode=pre"
+           "command": "claude-secret-scan --mode=pre --client=claude_code"
          }]
        }],
        "PostToolUse": [
@@ -47,14 +47,14 @@ Use `claude-secret-scan` for auto-detection, `claude-secret-scan-claude` to forc
            "matcher": "Read|read",
            "hooks": [{
              "type": "command",
-             "command": "claude-secret-scan-claude --mode=post"
+             "command": "claude-secret-scan --mode=post --client=claude_code"
            }]
          },
          {
            "matcher": "Bash|bash",
            "hooks": [{
              "type": "command",
-             "command": "claude-secret-scan-claude --mode=post"
+             "command": "claude-secret-scan --mode=post --client=claude_code"
            }]
          }
        ]

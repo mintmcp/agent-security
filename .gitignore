@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 *.py[cod]
+dist/
+*.egg-info/
 
 # Local settings
 .claude/

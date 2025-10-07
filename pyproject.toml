@@ -42,7 +42,6 @@ Source = "https://github.com/mintmcp/secrets-scanner"
 
 [project.scripts]
 claude-secret-scan = "secrets_scanner_hook:console_main"
-claude-secret-scan-claude = "secrets_scanner_hook:console_main_claude"
 cursor-secret-scan = "secrets_scanner_hook:console_main_cursor"
 
 [tool.setuptools]
