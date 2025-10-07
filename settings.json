@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ./secrets_scanner_hook.py --mode=pre --client=claude_code"
+            "command": "claude-secret-scan --mode=pre"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ./secrets_scanner_hook.py --mode=pre --client=claude_code"
+            "command": "claude-secret-scan --mode=pre"
           }
         ]
       }
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ./secrets_scanner_hook.py --mode=post --client=claude_code"
+            "command": "claude-secret-scan --mode=post"
           }
         ]
       },
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ./secrets_scanner_hook.py --mode=post --client=claude_code"
+            "command": "claude-secret-scan --mode=post"
           }
         ]
       }

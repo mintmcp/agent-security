@@ -3,12 +3,12 @@
   "hooks": {
     "beforeReadFile": [
       {
-        "command": "python3 ./secrets_scanner_hook.py --mode=pre"
+        "command": "cursor-secret-scan --mode=pre"
       }
     ],
     "beforeSubmitPrompt": [
       {
-        "command": "python3 ./secrets_scanner_hook.py --mode=pre"
+        "command": "cursor-secret-scan --mode=pre"
       }
     ]
   }
