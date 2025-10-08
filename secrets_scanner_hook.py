@@ -32,11 +32,7 @@ MAX_SCAN_BYTES = 5 * 1024 * 1024  # 5MB cap per file
 SAMPLE_BYTES = 4096  # used for binary sniffing
 
 
-# -----------------------------------------------------------------------------
-# Key access helpers
-# -----------------------------------------------------------------------------
-
-# (Removed alias-based key helper; use direct .get per documented schemas)
+# (strict schema access; direct .get only)
 
 
 PATTERNS = {
@@ -109,12 +105,7 @@ def should_scan_file(path: str) -> bool:
     return not is_probably_binary(head)
 
 
-"""
-Note: This implementation adheres strictly to documented schemas and does not
-walk arbitrary JSON trees. It reads only explicit fields for each event.
-"""
-
-
+ 
 def scan_text(text: str, path: str):
     findings = []
     line_starts = [0]
@@ -202,9 +193,6 @@ def detect_hook_type(hook_input):
             return "claude_code"
         if ev in cursor_events:
             return "cursor"
-    # Fallback heuristic: presence of tool_input/tool_response suggests Claude Code
-    if "tool_input" in hook_input or "tool_response" in hook_input:
-        return "claude_code"
     return "claude_code"
 
 
@@ -224,12 +212,7 @@ def _detect_tool_name(tool_input) -> str:
 
 
 def collect_cursor_post_payloads(hook_input, event_name: str | None):
-    """Extract post-event outputs for Cursor using documented fields directly.
-
-    - afterShellExecution: read stdout/stderr
-    - afterMCPExecution: avoid deep walks; best-effort on simple fields
-    - other events: return empty list
-    """
+    """Extract Cursor post-event outputs from documented fields."""
     evt = (event_name or "").strip()
     payloads = []
 
@@ -243,7 +226,6 @@ def collect_cursor_post_payloads(hook_input, event_name: str | None):
         return payloads
 
     if evt == "afterMCPExecution":
-        # The docs don't specify post fields; avoid walking nested structures.
         for key, label in (
             ("stdout", "[mcp stdout]"),
             ("stderr", "[mcp stderr]"),
@@ -259,14 +241,7 @@ def collect_cursor_post_payloads(hook_input, event_name: str | None):
 
 
 def collect_claude_post_payloads(hook_input):
-    """Extract post-event outputs for Claude Code using documented fields.
-
-    We avoid walking arbitrary nested JSON and instead read known top-level
-    keys based on the tool:
-      - Bash: scan stdout/stderr
-      - Read: scan content if present
-      - Others: if a simple top-level text field exists (e.g., content), scan it
-    """
+    """Extract Claude post-event outputs from documented fields."""
     tool_input = hook_input.get("tool_input") or {}
     tool_result = hook_input.get("tool_response") or {}
     tool_name = (hook_input.get("tool_name") or _detect_tool_name(tool_input) or "").strip()
@@ -414,9 +389,7 @@ def run_pre_hook(client_override: str | None = None):
                 if isinstance(cmd, str) and cmd.strip():
                     findings.extend(scan_text(cmd, "[mcp command]"))
             # No other Cursor pre-events are scanned
-            # Other Cursor events: nothing to scan pre
         else:
-            # Claude Code: extract precisely from documented event schemas
             ev = hook_input.get("hook_event_name") or ""
             ev = ev.strip()
 
@@ -424,7 +397,6 @@ def run_pre_hook(client_override: str | None = None):
                 tool_input = hook_input.get("tool_input") or {}
                 tool_name = (hook_input.get("tool_name") or _detect_tool_name(tool_input) or "").strip()
                 if isinstance(tool_input, dict):
-                    # Write/Edit/MultiEdit/Read: prefer inline content, else file path
                     if tool_name in {"Write", "Edit", "MultiEdit", "Read"}:
                         content = tool_input.get("content")
                         if isinstance(content, str) and content.strip():
@@ -437,13 +409,11 @@ def run_pre_hook(client_override: str | None = None):
                                 except Exception as exc:
                                     _emit(hook_type, hook_event, "block", f"Secret scan error: {exc}", event_name)
                                     return
-                    # Bash: scan the command if provided
                     elif tool_name == "Bash":
                         cmd = tool_input.get("command")
                         if isinstance(cmd, str) and cmd.strip():
                             findings.extend(scan_text(cmd, "[bash command]"))
                     else:
-                        # For other tools, only scan simple known fields to avoid walking
                         content = tool_input.get("content")
                         if isinstance(content, str) and content.strip():
                             findings.extend(scan_text(content, "[tool content]"))
