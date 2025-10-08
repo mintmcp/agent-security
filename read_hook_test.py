@@ -30,6 +30,7 @@ def run_hook_test(
     *,
     mode: str = "post",
     wrap_content: bool = True,
+    expect_exit: int | None = None,
 ):
     """Run the hook with synthetic data and report detection."""
 
@@ -38,8 +39,8 @@ def run_hook_test(
         if wrap_content:
             if client_type == "claude_code":
                 hook_input = {
-                    "toolInput": {"file_path": "test.env"},
-                    "toolResult": payload,
+                    "tool_input": {"file_path": "test.env"},
+                    "tool_response": payload,
                 }
             else:  # cursor
                 hook_input = {
@@ -51,9 +52,34 @@ def run_hook_test(
         else:
             hook_input = payload
             # If payload already has client-specific format, only test with that client
-            if "hook_event_name" in payload and client_type != "cursor":
-                continue
-            if ("toolInput" in payload or "tool_input" in payload) and client_type != "claude_code":
+            if isinstance(payload, dict) and "hook_event_name" in payload:
+                ev = payload.get("hook_event_name")
+                CLAUDE_EVENTS = {
+                    "PreToolUse",
+                    "PostToolUse",
+                    "UserPromptSubmit",
+                    "Notification",
+                    "Stop",
+                    "SubagentStop",
+                    "PreCompact",
+                    "SessionStart",
+                    "SessionEnd",
+                }
+                CURSOR_EVENTS = {
+                    "beforeReadFile",
+                    "afterFileEdit",
+                    "beforeSubmitPrompt",
+                    "beforeShellExecution",
+                    "afterShellExecution",
+                    "beforeMCPExecution",
+                    "afterMCPExecution",
+                    "stop",
+                }
+                if ev in CLAUDE_EVENTS and client_type != "claude_code":
+                    continue
+                if ev in CURSOR_EVENTS and client_type != "cursor":
+                    continue
+            if ("tool_input" in payload) and client_type != "claude_code":
                 continue
 
         result = subprocess.run(
@@ -62,6 +88,14 @@ def run_hook_test(
             capture_output=True,
             text=True,
         )
+
+        if expect_exit is not None and result.returncode != expect_exit:
+            return (
+                False,
+                f"{RED}❌ FAIL{RESET}",
+                f"{description} ({client_type}) - expected exit {expect_exit}, got {result.returncode}",
+                payload,
+            )
 
         try:
             # Try stdout first, then stderr (for exit code 2)
@@ -350,37 +384,19 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
     "User Submit Hook": [
         (
             {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": "Please review before I send: ghp_1234567890abcdefghijklmnopqrstuvwxyz",
-                            }
-                        ],
-                    }
-                ]
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "Please review before I send: ghp_1234567890abcdefghijklmnopqrstuvwxyz",
             },
-            "User message with GitHub PAT",
+            "Claude UserPromptSubmit with secret",
             True,
             {"mode": "pre", "wrap_content": False},
         ),
         (
             {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": "Just writing documentation updates today.",
-                            }
-                        ],
-                    }
-                ]
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "Please review the deployment plan",
             },
-            "User message without secrets",
+            "Claude UserPromptSubmit without secret",
             False,
             {"mode": "pre", "wrap_content": False},
         ),
@@ -448,8 +464,8 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
     "Command Output Hook": [
         (
             {
-                "toolInput": {"tool_name": "bash", "command": "echo secret"},
-                "toolResult": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
+                "tool_input": {"tool_name": "bash", "command": "echo secret"},
+                "tool_response": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
             },
             "Command stdout with OpenAI key",
             True,
@@ -457,8 +473,8 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
         ),
         (
             {
-                "toolInput": {"tool_name": "bash", "command": "echo stderr"},
-                "toolResult": {"stderr": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"},
+                "tool_input": {"tool_name": "bash", "command": "echo stderr"},
+                "tool_response": {"stderr": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"},
             },
             "Command stderr with GitHub token",
             True,
@@ -466,8 +482,8 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
         ),
         (
             {
-                "toolInput": {"tool_name": "bash", "command": "echo nested"},
-                "toolResult": {
+                "tool_input": {"tool_name": "bash", "command": "echo nested"},
+                "tool_response": {
                     "content": [
                         {
                             "type": "text",
@@ -500,6 +516,64 @@ SUITES = {
     "extended": {
         "title": "EXTENDED SECRET SCANNER TEST SUITE",
         "tests": EXTENDED_TESTS,
+        "show_snippet": True,
+    },
+    "exitcodes": {
+        "title": "CLAUDE EXIT CODE TESTS",
+        "tests": {
+            "PreToolUse": [
+                (
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "tool_name": "Read",
+                        "tool_input": {
+                            "file_path": "dummy.txt",
+                            "content": "OPENAI_API_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz",
+                        },
+                    },
+                    "Claude PreToolUse block exit code 2",
+                    True,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 2},
+                ),
+                (
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "tool_name": "Read",
+                        "tool_input": {
+                            "file_path": "dummy.txt",
+                            "content": "hello world",
+                        },
+                    },
+                    "Claude PreToolUse allow exit code 0",
+                    False,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 0},
+                ),
+            ],
+            "PostToolUse": [
+                (
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "Bash",
+                        "tool_input": {"tool_name": "Bash", "command": "echo secret"},
+                        "tool_response": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
+                    },
+                    "Claude PostToolUse block exit code 2",
+                    True,
+                    {"mode": "post", "wrap_content": False, "expect_exit": 2},
+                ),
+                (
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "Bash",
+                        "tool_input": {"tool_name": "Bash", "command": "echo ok"},
+                        "tool_response": {"stdout": "deploy complete"},
+                    },
+                    "Claude PostToolUse allow exit code 0",
+                    False,
+                    {"mode": "post", "wrap_content": False, "expect_exit": 0},
+                ),
+            ],
+        },
         "show_snippet": True,
     },
 }
@@ -578,13 +652,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run secrets_scanner_hook.py secret scanner tests")
     parser.add_argument(
         "--suite",
-        choices=["basic", "extended", "all"],
+        choices=["basic", "extended", "exitcodes", "all"],
         default="all",
         help="Which test suite to run (default: all)",
     )
     args = parser.parse_args()
 
-    suite_keys = ["basic", "extended"] if args.suite == "all" else [args.suite]
+    suite_keys = ["basic", "extended", "exitcodes"] if args.suite == "all" else [args.suite]
 
     overall = {"total": 0, "passed": 0, "failed": 0, "warnings": 0}
 
