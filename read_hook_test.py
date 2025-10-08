@@ -573,6 +573,26 @@ SUITES = {
                     {"mode": "post", "wrap_content": False, "expect_exit": 0},
                 ),
             ],
+            "UserPromptSubmit": [
+                (
+                    {
+                        "hook_event_name": "UserPromptSubmit",
+                        "prompt": "Please remember ghp_abcdefghijklmnopqrstuvwxyz1234567890",
+                    },
+                    "Claude UserPromptSubmit block exit code 2",
+                    True,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 2},
+                ),
+                (
+                    {
+                        "hook_event_name": "UserPromptSubmit",
+                        "prompt": "Please review the deployment plan",
+                    },
+                    "Claude UserPromptSubmit allow exit code 0",
+                    False,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 0},
+                ),
+            ],
         },
         "show_snippet": True,
     },
