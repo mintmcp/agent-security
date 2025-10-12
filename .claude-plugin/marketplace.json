@@ -16,7 +16,7 @@
         "name": "MintMCP",
         "email": "support@mintmcp.com"
       },
-      "source": "./plugins/secrets-scanner",
+      "source": "./plugins/secrets_scanner",
       "category": "security",
       "keywords": ["security", "secrets", "credentials", "scanning"]
     }

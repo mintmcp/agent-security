@@ -23,7 +23,7 @@ jobs:
       - name: Install build tooling
         run: python -m pip install build
       - name: Run hook tests
-        run: python3 plugins/secrets-scanner/tests/read_hook_test.py --suite basic
+        run: python3 plugins/secrets_scanner/tests/read_hook_test.py --suite basic
       - name: Build distribution artifacts
         run: python -m build
 

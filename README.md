@@ -16,7 +16,7 @@ Detects 35+ credential formats across cloud, version control, payment, and colla
 - No third-party dependencies
 - Python 3.7+ compatible
 
-[→ View Plugin README](./plugins/secrets-scanner/README.md)
+[→ View Plugin README](./plugins/secrets_scanner/README.md)
 
 ## Quick Start
 
@@ -104,7 +104,7 @@ For Cursor users, copy `examples/configs/cursor-hooks.json` to `~/.cursor/hooks.
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace catalog
 ├── plugins/
-│   └── secrets-scanner/
+│   └── secrets_scanner/
 │       ├── .claude-plugin/
 │       │   └── plugin.json       # Plugin metadata
 │       ├── hooks/

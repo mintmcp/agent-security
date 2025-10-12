@@ -43,12 +43,12 @@ Source = "https://github.com/mintmcp/agent-security"
 Marketplace = "https://github.com/mintmcp/agent-security"
 
 [project.scripts]
-claude-secret-scan = "plugins.secrets-scanner.hooks.secrets_scanner_hook:console_main_claude"
-cursor-secret-scan = "plugins.secrets-scanner.hooks.secrets_scanner_hook:console_main_cursor"
+claude-secret-scan = "plugins.secrets_scanner.hooks.secrets_scanner_hook:console_main_claude"
+cursor-secret-scan = "plugins.secrets_scanner.hooks.secrets_scanner_hook:console_main_cursor"
 
 [tool.setuptools]
-packages = ["plugins.secrets-scanner.hooks"]
+packages = ["plugins.secrets_scanner.hooks"]
 package-dir = {"" = "."}
 
 [tool.setuptools.package-data]
-"plugins.secrets-scanner.hooks" = ["*.py"]
+"plugins.secrets_scanner.hooks" = ["*.py"]

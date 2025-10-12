@@ -15,7 +15,7 @@ from pathlib import Path
 from pathlib import Path as PathLib
 
 # Add plugin directory to path
-_plugin_path = PathLib(__file__).parent.parent / "plugins" / "secrets-scanner" / "hooks"
+_plugin_path = PathLib(__file__).parent.parent / "plugins" / "secrets_scanner" / "hooks"
 sys.path.insert(0, str(_plugin_path))
 
 from secrets_scanner_hook import (
