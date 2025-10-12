@@ -135,3 +135,7 @@ See `PATTERNS` inside `secrets_scanner_hook.py` for the complete set.
 ## License
 
 Apache License 2.0. See `LICENSE` for the full text.
+
+## Acknowledgements
+
+Portions of the denylist regular expressions were informed by or adapted from the detect-secrets project (https://github.com/Yelp/detect-secrets), which is licensed under Apache 2.0.
