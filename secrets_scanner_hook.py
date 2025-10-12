@@ -31,31 +31,8 @@ __version__ = "0.1.3"
 MAX_SCAN_BYTES = 5 * 1024 * 1024  # 5MB cap per file
 SAMPLE_BYTES = 4096  # used for binary sniffing
 
-USER_MESSAGE_KEYS = {
-    "messages",
-    "message",
-    "text",
-    "content",
-    "input",
-    "input_text",
-    "prompt",
-    "body",
-    "segments",
-    "user_message",
-}
 
-COMMAND_OUTPUT_KEYS = {
-    "stdout",
-    "stderr",
-    "output",
-    "content",
-    "text",
-    "message",
-    "result",
-    "body",
-    "response",
-    "value",
-}
+# (strict schema access; direct .get only)
 
 
 PATTERNS = {
@@ -65,7 +42,7 @@ PATTERNS = {
     "GitHub Fine-Grained PAT": re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,255}\b"),
     "Slack Token": re.compile(r"\bxox[bpaeors]-[A-Za-z0-9-]{10,}\b"),
     "Slack Webhook": re.compile(r"https://hooks\.slack\.com/services/[A-Za-z0-9]+/[A-Za-z0-9]+/[A-Za-z0-9]+"),
-    "Stripe Secret Key": re.compile(r"\b(sk|rk)_(live|test)_[A-Za-z0-9]{20,}\b"),
+    "Stripe Secret Key": re.compile(r"\b(sk|rk)_(live|test)_[A-Za-z0-9]{50,}\b"),
     "Stripe Publishable Key": re.compile(r"\bpk_(live|test)_[A-Za-z0-9]{20,}\b"),
     "Twilio Account SID": re.compile(r"\bAC[0-9a-fA-F]{32}\b"),
     "Twilio API Key SID": re.compile(r"\bSK[0-9a-fA-F]{32}\b"),
@@ -76,20 +53,17 @@ PATTERNS = {
     "Telegram Bot Token": re.compile(r"\b\d{7,12}:[A-Za-z0-9_-]{35,}\b"),
     "Google API Key": re.compile(r"\bAIza[0-9A-Za-z\-_\\]{32,40}\b"),
     "Google OAuth Token": re.compile(r"\bya29\.[0-9A-Za-z\-_]{20,}\b"),
-    "GCP Service Account": re.compile(r"\b[A-Za-z0-9\-\_]+@[A-Za-z0-9\-\_]+\.iam\.gserviceaccount\.com\b"),
     "OpenAI API Key": re.compile(r"\bsk-(proj-)?[A-Za-z0-9]{20,200}\b"),
     "GitLab Personal Access Token": re.compile(r"\bglpat-[0-9A-Za-z\-_]{20,}\b"),
     "npm Token": re.compile(r"\bnpm_[A-Za-z0-9]{30,}\b"),
     "PyPI Token": re.compile(r"\bpypi-[A-Za-z0-9\-_]{40,}\b"),
-    "Atlassian API Token (Basic Auth)": re.compile(r"https?://[^/\s:@]+:[^/\s:@]+@[^/\s]+"),
     "Azure Storage Connection String": re.compile(r"DefaultEndpointsProtocol=(?:http|https);AccountName=[A-Za-z0-9\-]+;AccountKey=([A-Za-z0-9+/=]{40,});EndpointSuffix=core\.windows\.net"),
     "Azure SAS Token": re.compile(r"[\?&]sv=\d{4}-\d{2}-\d{2}[^ \n]*?&sig=[A-Za-z0-9%+/=]{16,}"),
     "JWT Token": re.compile(r"\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\b"),
-    "Private Key (PEM)": re.compile(r"-----BEGIN (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----[\s\S]+?-----END (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----"),
+    "Private Key (PEM)": re.compile(r"-----BEGIN (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----\s*\n(?:(?:[A-Za-z0-9\-]+:[^\n]*\n)*\s*)?(?:[A-Za-z0-9+/=]{40,}\s*\n)+-----END (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----"),
     "OpenSSH Private Key": re.compile(r"-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]+?-----END OPENSSH PRIVATE KEY-----"),
     "PGP Private Key": re.compile(r"-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]+?-----END PGP PRIVATE KEY BLOCK-----"),
     "Password Assignment": re.compile(r"(?i)\b(pass(word)?|pwd)\s*[:=]\s*['\"][^'\"\n]{8,}['\"]"),
-    "API Key Assignment": re.compile(r"(?i)\b(api[_\-]?key|token|secret|client_secret)\s*[:=]\s*['\"][^'\"\n]{16,}['\"]"),
     "Bitbucket App Password": re.compile(r"https://[^/\s:@]+:[^/\s:@]+@bitbucket\.org"),
     "Databricks PAT": re.compile(r"\bdapi[A-Za-z0-9]{32}\b"),
     "Firebase FCM Server Key": re.compile(r"AAAA[A-Za-z0-9_-]{7,}:[A-Za-z0-9_-]{140,}"),
@@ -100,8 +74,7 @@ PATTERNS = {
     "Dropbox Access Token": re.compile(r"\bsl\.[A-Za-z0-9_-]{120,}\b"),
     "DigitalOcean Personal Access Token": re.compile(r"\bdop_v1_[a-f0-9]{64}\b"),
     "Square Access Token": re.compile(r"\bEAAA[A-Za-z0-9]{60}\b"),
-    "Airtable Personal Access Token": re.compile(r"\bpat[A-Za-z0-9]{14}\b"),
-    "Airtable Legacy API Key": re.compile(r"\bkey[A-Za-z0-9]{14}\b"),
+    "Airtable Personal Access Token": re.compile(r"\bpat[A-Za-z0-9]{14}\.[a-f0-9]{64}\b"),
     "Facebook Access Token": re.compile(r"\bEAA[A-Za-z0-9]{30,}\b"),
 }
 
@@ -128,81 +101,7 @@ def should_scan_file(path: str) -> bool:
     return not is_probably_binary(head)
 
 
-def _iter_texts_for_keys(value, allowed_keys, allowed=False):
-    if isinstance(value, str):
-        if value.strip() and allowed:
-            yield value
-        return
-    if isinstance(value, list):
-        for item in value:
-            yield from _iter_texts_for_keys(item, allowed_keys, allowed)
-        return
-    if isinstance(value, dict):
-        for k, v in value.items():
-            nxt_allowed = allowed or (isinstance(k, str) and k.lower() in allowed_keys)
-            yield from _iter_texts_for_keys(v, allowed_keys, nxt_allowed)
-
-
-def iter_user_texts(payload):
-    if not isinstance(payload, dict):
-        return
-    msgs = payload.get("messages")
-    if isinstance(msgs, list):
-        for entry in msgs:
-            if isinstance(entry, dict) and entry.get("role") == "user":
-                content = entry.get("content")
-                if isinstance(content, str) and content.strip():
-                    yield content
-                else:
-                    yield from _iter_texts_for_keys(content, USER_MESSAGE_KEYS, True)
-                t = entry.get("text")
-                if isinstance(t, str) and t.strip():
-                    yield t
-    for key in ("message", "input", "input_text", "prompt", "body", "text", "userMessage"):
-        if key in payload:
-            yield from _iter_texts_for_keys(payload[key], USER_MESSAGE_KEYS, True)
-
-
-def extract_command_outputs(data):
-    out = []
-
-    def walk(node, label=None, allowed=False):
-        if isinstance(node, str):
-            if node.strip() and (allowed or label is None):
-                out.append((label or "content", node))
-            return
-        if isinstance(node, list):
-            for it in node:
-                walk(it, label, allowed)
-            return
-        if isinstance(node, dict):
-            for k, v in node.items():
-                if isinstance(k, str):
-                    lower = k.lower()
-                    nxt_allowed = allowed or (lower in COMMAND_OUTPUT_KEYS)
-                    nxt_label = k if lower in COMMAND_OUTPUT_KEYS else label
-                else:
-                    nxt_allowed = allowed
-                    nxt_label = label
-                walk(v, nxt_label, nxt_allowed)
-
-    if isinstance(data, str):
-        if data.strip():
-            out.append(("content", data))
-    else:
-        walk(data)
-
-    seen = set()
-    uniq = []
-    for label, text in out:
-        t = text.strip()
-        if not t or t in seen:
-            continue
-        seen.add(t)
-        uniq.append((label or "content", text))
-    return uniq
-
-
+ 
 def scan_text(text: str, path: str):
     findings = []
     line_starts = [0]
@@ -260,74 +159,110 @@ def build_findings_message(findings, heading: str, limit: int = 5) -> str:
 # -----------------------------------------------------------------------------
 
 def detect_hook_type(hook_input):
-    if isinstance(hook_input, dict) and "hook_event_name" in hook_input:
-        return "cursor"
+    if not isinstance(hook_input, dict):
+        return "claude_code"
+    ev = hook_input.get("hook_event_name")
+    if isinstance(ev, str):
+        ev = ev.strip()
+        claude_events = {
+            "PreToolUse",
+            "PostToolUse",
+            "UserPromptSubmit",
+            "Notification",
+            "Stop",
+            "SubagentStop",
+            "PreCompact",
+            "SessionStart",
+            "SessionEnd",
+        }
+        cursor_events = {
+            "beforeReadFile",
+            "afterFileEdit",
+            "beforeSubmitPrompt",
+            "beforeShellExecution",
+            "afterShellExecution",
+            "beforeMCPExecution",
+            "afterMCPExecution",
+            "stop",
+        }
+        if ev in claude_events:
+            return "claude_code"
+        if ev in cursor_events:
+            return "cursor"
     return "claude_code"
 
 
-def get_file_path_pre(hook_input, hook_type: str):
-    if hook_type == "cursor":
-        return hook_input.get("file_path", "")
-    tool_params = hook_input.get("tool_input") or hook_input.get("toolInput", {})
-    return tool_params.get("file_path", "") if isinstance(tool_params, dict) else ""
-
-
-def _label_for_output(raw_label: str, tool_name: str, file_path: str) -> str:
-    if file_path and isinstance(raw_label, str) and raw_label.lower() in {"content", "text", "message"}:
-        return file_path
-    base = (tool_name or "tool").strip() or "tool"
-    if isinstance(raw_label, str):
-        lower = raw_label.lower()
-        if lower in {"stdout", "stderr"}:
-            return f"[{base} {lower}]"
-        if lower in {"content", "text", "message", "result", "output", "body"}:
-            return f"[{base} output]"
-        return f"[{base} {raw_label}]"
-    return f"[{base} output]"
+# Removed legacy helpers; using direct documented fields only
 
 
 def _detect_tool_name(tool_input) -> str:
     if isinstance(tool_input, str) and tool_input.strip():
         return tool_input
     if isinstance(tool_input, dict):
-        for key in ("tool_name", "toolName", "name", "type"):
-            value = tool_input.get(key)
-            if isinstance(value, str) and value.strip():
-                return value
+        value = tool_input.get("tool_name")
+        if isinstance(value, str) and value.strip():
+            return value
         if isinstance(tool_input.get("command"), str):
             return "command"
     return "tool"
 
 
 def collect_cursor_post_payloads(hook_input, event_name: str | None):
-    tool_name = "shell" if (event_name or "") == "afterShellExecution" else "tool"
-    file_path = hook_input.get("file_path", "")
-    seen = set()
+    """Extract Cursor post-event outputs from documented fields."""
+    evt = (event_name or "").strip()
     payloads = []
-    for raw_label, text in extract_command_outputs(hook_input):
-        label = _label_for_output(raw_label, tool_name, file_path)
-        key = (label, text.strip())
-        if not key[1] or key in seen:
-            continue
-        seen.add(key)
-        payloads.append((label, text))
+
+    if evt == "afterShellExecution":
+        stdout = hook_input.get("stdout")
+        stderr = hook_input.get("stderr")
+        if isinstance(stdout, str) and stdout.strip():
+            payloads.append(("[shell stdout]", stdout))
+        if isinstance(stderr, str) and stderr.strip():
+            payloads.append(("[shell stderr]", stderr))
+        return payloads
+
+    if evt == "afterMCPExecution":
+        for key, label in (
+            ("stdout", "[mcp stdout]"),
+            ("stderr", "[mcp stderr]"),
+            ("text", "[mcp output]"),
+            ("message", "[mcp output]"),
+        ):
+            val = hook_input.get(key)
+            if isinstance(val, str) and val.strip():
+                payloads.append((label, val))
+        return payloads
+
     return payloads
 
 
 def collect_claude_post_payloads(hook_input):
-    tool_input = hook_input.get("tool_input") or hook_input.get("toolInput") or {}
-    tool_result = hook_input.get("tool_response") or hook_input.get("toolResult")
-    file_path = tool_input.get("file_path", "") if isinstance(tool_input, dict) else ""
-    tool_name = hook_input.get("tool_name") or _detect_tool_name(tool_input)
-    seen = set()
+    """Extract Claude post-event outputs from documented fields."""
+    tool_input = hook_input.get("tool_input") or {}
+    tool_result = hook_input.get("tool_response") or {}
+    tool_name = (hook_input.get("tool_name") or _detect_tool_name(tool_input) or "").strip()
+
     payloads = []
-    for raw_label, text in extract_command_outputs(tool_result):
-        label = _label_for_output(raw_label, tool_name, file_path)
-        key = (label, text.strip())
-        if not key[1] or key in seen:
-            continue
-        seen.add(key)
-        payloads.append((label, text))
+
+    if tool_name.lower() == "bash":
+        stdout = tool_result.get("stdout") if isinstance(tool_result, dict) else None
+        stderr = tool_result.get("stderr") if isinstance(tool_result, dict) else None
+        if isinstance(stdout, str) and stdout.strip():
+            payloads.append(("[bash stdout]", stdout))
+        if isinstance(stderr, str) and stderr.strip():
+            payloads.append(("[bash stderr]", stderr))
+        return payloads
+
+    # Read tool or similar may return content directly
+    if isinstance(tool_result, dict):
+        content = tool_result.get("content")
+        if isinstance(content, str) and content.strip():
+            label = tool_input.get("file_path") if isinstance(tool_input, dict) else None
+            payloads.append((label or "[tool output]", content))
+    elif isinstance(tool_result, str) and tool_result.strip():
+        label = tool_input.get("file_path") if isinstance(tool_input, dict) else None
+        payloads.append((label or "[tool output]", tool_result))
+
     return payloads
 
 
@@ -422,18 +357,69 @@ def run_pre_hook(client_override: str | None = None):
         hook_event = event_name or ("PreToolUse" if hook_type == "claude_code" else "beforeReadFile")
 
         findings = []
-        file_path = get_file_path_pre(hook_input, hook_type)
-        inline_content = hook_input.get("content") if hook_type == "cursor" else None
-        if isinstance(inline_content, str) and inline_content.strip():
-            findings.extend(scan_text(inline_content, file_path or "[file content]"))
-        elif file_path:
-            try:
-                findings.extend(scan_file(file_path))
-            except Exception as exc:
-                _emit(hook_type, hook_event, "block", f"Secret scan error: {exc}", event_name)
-                return
-        for idx, msg in enumerate(iter_user_texts(hook_input), start=1):
-            findings.extend(scan_text(msg, f"[user message #{idx}]"))
+
+        if hook_type == "cursor":
+            # Cursor: extract directly per docs, avoid walking arbitrary JSON
+            evt = (event_name or "").strip()
+            if evt == "beforeReadFile":
+                file_path = hook_input.get("file_path") or ""
+                content = hook_input.get("content")
+                if isinstance(content, str) and content.strip():
+                    findings.extend(scan_text(content, file_path or "[file content]"))
+                elif file_path:
+                    try:
+                        findings.extend(scan_file(file_path))
+                    except Exception as exc:
+                        _emit(hook_type, hook_event, "block", f"Secret scan error: {exc}", event_name)
+                        return
+            elif evt == "beforeSubmitPrompt":
+                prompt = hook_input.get("prompt")
+                if isinstance(prompt, str) and prompt.strip():
+                    findings.extend(scan_text(prompt, "[prompt]"))
+            elif evt == "beforeShellExecution":
+                cmd = hook_input.get("command")
+                if isinstance(cmd, str) and cmd.strip():
+                    findings.extend(scan_text(cmd, "[shell command]"))
+            elif evt == "beforeMCPExecution":
+                cmd = hook_input.get("command")
+                if isinstance(cmd, str) and cmd.strip():
+                    findings.extend(scan_text(cmd, "[mcp command]"))
+            # No other Cursor pre-events are scanned
+        else:
+            ev = hook_input.get("hook_event_name") or ""
+            ev = ev.strip()
+
+            if ev == "PreToolUse":
+                tool_input = hook_input.get("tool_input") or {}
+                tool_name = (hook_input.get("tool_name") or _detect_tool_name(tool_input) or "").strip()
+                if isinstance(tool_input, dict):
+                    if tool_name in {"Write", "Edit", "MultiEdit", "Read"}:
+                        content = tool_input.get("content")
+                        if isinstance(content, str) and content.strip():
+                            findings.extend(scan_text(content, tool_input.get("file_path") or "[content]"))
+                        else:
+                            fp = tool_input.get("file_path")
+                            if isinstance(fp, str) and fp.strip():
+                                try:
+                                    findings.extend(scan_file(fp))
+                                except Exception as exc:
+                                    _emit(hook_type, hook_event, "block", f"Secret scan error: {exc}", event_name)
+                                    return
+                    elif tool_name == "Bash":
+                        cmd = tool_input.get("command")
+                        if isinstance(cmd, str) and cmd.strip():
+                            findings.extend(scan_text(cmd, "[bash command]"))
+                    else:
+                        content = tool_input.get("content")
+                        if isinstance(content, str) and content.strip():
+                            findings.extend(scan_text(content, "[tool content]"))
+
+            elif ev == "UserPromptSubmit":
+                prompt = hook_input.get("prompt")
+                if isinstance(prompt, str) and prompt.strip():
+                    findings.extend(scan_text(prompt, "[prompt]"))
+            # No other Claude pre-events are scanned
+
         if findings:
             _emit(hook_type, hook_event, "block", build_findings_message(findings, "SECRET DETECTED (submission blocked)"), event_name)
         else:

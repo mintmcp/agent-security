@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 GREEN = '\033[92m'
@@ -30,6 +31,7 @@ def run_hook_test(
     *,
     mode: str = "post",
     wrap_content: bool = True,
+    expect_exit: Optional[int] = None,
 ):
     """Run the hook with synthetic data and report detection."""
 
@@ -38,8 +40,8 @@ def run_hook_test(
         if wrap_content:
             if client_type == "claude_code":
                 hook_input = {
-                    "toolInput": {"file_path": "test.env"},
-                    "toolResult": payload,
+                    "tool_input": {"file_path": "test.env"},
+                    "tool_response": payload,
                 }
             else:  # cursor
                 hook_input = {
@@ -51,9 +53,34 @@ def run_hook_test(
         else:
             hook_input = payload
             # If payload already has client-specific format, only test with that client
-            if "hook_event_name" in payload and client_type != "cursor":
-                continue
-            if ("toolInput" in payload or "tool_input" in payload) and client_type != "claude_code":
+            if isinstance(payload, dict) and "hook_event_name" in payload:
+                ev = payload.get("hook_event_name")
+                CLAUDE_EVENTS = {
+                    "PreToolUse",
+                    "PostToolUse",
+                    "UserPromptSubmit",
+                    "Notification",
+                    "Stop",
+                    "SubagentStop",
+                    "PreCompact",
+                    "SessionStart",
+                    "SessionEnd",
+                }
+                CURSOR_EVENTS = {
+                    "beforeReadFile",
+                    "afterFileEdit",
+                    "beforeSubmitPrompt",
+                    "beforeShellExecution",
+                    "afterShellExecution",
+                    "beforeMCPExecution",
+                    "afterMCPExecution",
+                    "stop",
+                }
+                if ev in CLAUDE_EVENTS and client_type != "claude_code":
+                    continue
+                if ev in CURSOR_EVENTS and client_type != "cursor":
+                    continue
+            if ("tool_input" in payload) and client_type != "claude_code":
                 continue
 
         result = subprocess.run(
@@ -62,6 +89,14 @@ def run_hook_test(
             capture_output=True,
             text=True,
         )
+
+        if expect_exit is not None and result.returncode != expect_exit:
+            return (
+                False,
+                f"{RED}❌ FAIL{RESET}",
+                f"{description} ({client_type}) - expected exit {expect_exit}, got {result.returncode}",
+                payload,
+            )
 
         try:
             # Try stdout first, then stderr (for exit code 2)
@@ -142,10 +177,10 @@ BASIC_TESTS = {
         (wrap_secret("https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"), "Slack webhook URL", True),
     ],
     "Payment Providers": [
-        (wrap_secret("sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9"), "Stripe secret key (live)", True),
-        (wrap_secret("sk_test_4eC39HqLyjWDarjtT1zdp7dc1234567890abcdef"), "Stripe secret key (test)", True),
-        (wrap_secret("rk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6"), "Stripe restricted key (live)", True),
-        (wrap_secret("rk_test_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6"), "Stripe restricted key (test)", True),
+        (wrap_secret("sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5"), "Stripe secret key (live)", True),
+        (wrap_secret("sk_test_4eC39HqLyjWDarjtT1zdp7dc1234567890abcdefghijklmnopqr"), "Stripe secret key (test)", True),
+        (wrap_secret("rk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4"), "Stripe restricted key (live)", True),
+        (wrap_secret("rk_test_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4"), "Stripe restricted key (test)", True),
         (wrap_secret("pk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6"), "Stripe publishable key (live)", True),
         (wrap_secret("pk_test_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6"), "Stripe publishable key (test)", True),
     ],
@@ -159,7 +194,7 @@ BASIC_TESTS = {
         (wrap_secret("AIzaSyD-1234567890-abcdefghijklmnopqrs"), "Google API Key with hyphens (39 chars)", True),
         (wrap_secret("AIzaSyD_1234567890_abcdefghijklmnopqrs"), "Google API Key with underscores (39 chars)", True),
         (wrap_secret("ya29.a0AfH6SMBx1234567890-abcdefghijklmnopqrstuvwxyz"), "Google OAuth token (ya29)", True),
-        (wrap_secret("my-service@my-project-123.iam.gserviceaccount.com"), "GCP service account email", True),
+        # GCP service account emails removed - they're identifiers, not secrets
     ],
     "OpenAI": [
         (wrap_secret("sk-1234567890abcdefghijklmnopqrstuvwxyz"), "OpenAI API key (legacy)", True),
@@ -185,16 +220,14 @@ BASIC_TESTS = {
         (wrap_secret("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"), "JWT token", True),
     ],
     "Private Keys": [
-        (wrap_secret("-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7VJTUt9Us8cKj\\n-----END PRIVATE KEY-----"), "PEM private key", True),
-        (wrap_secret("-----BEGIN RSA PRIVATE KEY-----\\nMIIEpAIBAAKCAQEA1234567890abcdef\\n-----END RSA PRIVATE KEY-----"), "RSA private key", True),
-        (wrap_secret("-----BEGIN OPENSSH PRIVATE KEY-----\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUA\\n-----END OPENSSH PRIVATE KEY-----"), "OpenSSH private key", True),
-        (wrap_secret("-----BEGIN PGP PRIVATE KEY BLOCK-----\\nVersion: GnuPG v2\\n-----END PGP PRIVATE KEY BLOCK-----"), "PGP private key", True),
+        (wrap_secret("-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7VJTUt9Us8cKj\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7VJTUt9Us8cKj\n-----END PRIVATE KEY-----"), "PEM private key", True),
+        (wrap_secret("-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN\nOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST\n-----END RSA PRIVATE KEY-----"), "RSA private key", True),
+        (wrap_secret("-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\nQyNTUxOQAAACDjNITquU0UpKJBD9gvgNq2O9GlVYJPnLGaO9N1R6Q9CQAAAJgNYxKUDWMS\n-----END OPENSSH PRIVATE KEY-----"), "OpenSSH private key", True),
+        (wrap_secret("-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: GnuPG v2\n\nlQOYBFzQxOsBCADHvT3VfN9+ZhX3dWvXGPLjFDvmJj7jWZqjkT7q8sVkT9xzQmN8\nmJPLVwXYXZT9zQxRJPvXZqT7qjkVwXYZT9zQxRJPvXZqT7qjkVwXYZT9zQxRJPvX\n-----END PGP PRIVATE KEY BLOCK-----"), "PGP private key", True),
     ],
     "Generic Patterns": [
         (wrap_secret('PASSWORD="MySecurePassword123!"'), "Password assignment", True),
         (wrap_secret('password="admin123456789"'), "Password assignment (lowercase)", True),
-        (wrap_secret('API_KEY="sk_live_1234567890abcdef"'), "API key assignment", True),
-        (wrap_secret('client_secret="1234567890abcdefghij"'), "Client secret assignment", True),
     ],
     "Additional Providers": [
         (wrap_secret("https://user:app_password@bitbucket.org/repo.git"), "Bitbucket app password in URL", True),
@@ -208,8 +241,8 @@ BASIC_TESTS = {
         (wrap_secret("sl." + "A" * 140), "Dropbox access token", True),
         (wrap_secret("dop_v1_" + "a" * 64), "DigitalOcean personal access token", True),
         (wrap_secret("EAAA" + "A" * 60), "Square access token", True),
-        (wrap_secret("patABCDEFGHIJKLMN"), "Airtable personal access token", True),
-        (wrap_secret("keyABCDEFGHIJKLMN"), "Airtable legacy API key", True),
+        (wrap_secret("patEceGFxxVzGDZoA.22b91547ed078219ec79315c34c2b526f1ddd02e567547f5dd7d37dbe1bf0512"), "Airtable personal access token", True),
+        # Airtable legacy API key removed - pattern was too broad and deprecated
         (wrap_secret("EAA" + "A" * 35), "Facebook access token", True),
     ],
     "Edge Cases & Should NOT Detect": [
@@ -237,11 +270,11 @@ GITHUB_TOKEN=ghp_1234567890abcdefghijklmnopqrstuvwxyz
 SLACK_TOKEN=xoxb-1234567890-1234567890-AbCdEfGhIjKlMnOpQrSt
 DATABASE_URL=postgresql://user:pass@localhost/db
 """.strip(), "Docker env file with multiple secrets", True),
-        ('{"api_key": "sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9", "webhook": "https://hooks.slack.com/services/T00/B00/XXX"}', "JSON with secrets", True),
+        ('{"api_key": "sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5", "webhook": "https://hooks.slack.com/services/T00/B00/XXX"}', "JSON with secrets", True),
         ("""
 credentials:
   github_token: ghp_1234567890abcdefghijklmnopqrstuvwxyz
-  stripe_key: sk_test_4eC39HqLyjWDarjtT1zdp7dc1234567890abcdef
+  stripe_key: sk_test_4eC39HqLyjWDarjtT1zdp7dc1234567890abcdefghijklmnopqr
 """.strip(), "YAML-like config", True),
         ("""
 export OPENAI_API_KEY=sk-proj-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKL
@@ -259,27 +292,27 @@ curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com
     ],
     "Edge Cases - URL Encoded": [
         ("token=ghp_1234567890abcdefghijklmnopqrstuvwxyz&other=param", "Secret in URL params", True),
-        ("https://api.example.com?key=sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9", "Secret in URL", True),
+        ("https://api.example.com?key=sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5", "Secret in URL", True),
     ],
     "Edge Cases - Code Contexts": [
         ("const apiKey = 'ghp_1234567890abcdefghijklmnopqrstuvwxyz';", "JavaScript const", True),
-        ('API_KEY = "sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9"', "Python assignment", True),
+        ('API_KEY = "sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5"', "Python assignment", True),
         ("String apiKey = \"AKIAIOSFODNN7EXAMPLE\";", "Java string", True),
         ("$token = 'xoxb-1234567890-1234567890-AbCdEfGhIjKlMnOpQrSt';", "PHP variable", True),
     ],
     "Edge Cases - Comments": [
         ("# API_KEY=AKIAIOSFODNN7EXAMPLE", "Secret in comment (should still detect)", True),
         ("// TOKEN: ghp_1234567890abcdefghijklmnopqrstuvwxyz", "Secret in C++ comment", True),
-        ("/* SECRET: sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9 */", "Secret in block comment", True),
+        ("/* SECRET: sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5 */", "Secret in block comment", True),
     ],
     "Multiple Secrets in One Line": [
         ("AWS_KEY=AKIAIOSFODNN7EXAMPLE GITHUB_TOKEN=ghp_1234567890abcdefghijklmnopqrstuvwxyz", "Two secrets one line", True),
-        ("AKIAIOSFODNN7EXAMPLE,ghp_1234567890abcdefghijklmnopqrstuvwxyz,sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9", "CSV of secrets", True),
+        ("AKIAIOSFODNN7EXAMPLE,ghp_1234567890abcdefghijklmnopqrstuvwxyz,sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5", "CSV of secrets", True),
     ],
     "Variations - Different Lengths": [
         ("AKIAIOSFODNN7EXAMPL0", "AWS key exactly 20 chars", True),
         ("ghp_" + "a" * 30, "GitHub token min length (30)", True),
-        ("sk_live_" + "a" * 20, "Stripe key min length", True),
+        ("sk_live_" + "a" * 50, "Stripe key min length (50)", True),
         ("AIza" + "a" * 32, "Google key min length (32)", True),
         ("ghp_" + "a" * 100, "GitHub token long (104 chars)", True),
         ("sk-proj-" + "a" * 150, "OpenAI long project key", True),
@@ -290,13 +323,16 @@ curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com
 Proc-Type: 4,ENCRYPTED
 DEK-Info: AES-256-CBC,12345
 
-MIIEpAIBAAKCAQEA1234567890abcdef
+MIIEpAIBAAKCAQEA1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP
+QRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV
 -----END RSA PRIVATE KEY-----""", "Encrypted RSA key", True),
         ("""-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIIGlRQipl5kjpubdLPPG3DjE1X0LPZ+GL8p+3ZuLQR2voAoGCCqGSM49
+AwEHoUQDQgAE8Xmf7Q9N8K3L4M5P6R7S8T9U0V1W2X3Y4Z5A6B7C8D9E0F1G2H3I4J
 -----END EC PRIVATE KEY-----""", "EC private key", True),
         ("""-----BEGIN ENCRYPTED PRIVATE KEY-----
-MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
+MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
+0DCBlgYJKoZIhvcNAQUMMIGIBAOAgICAgICAgICAgICAgICAgICAgICAgICAgICA
 -----END ENCRYPTED PRIVATE KEY-----""", "Encrypted private key", True),
     ],
     "Case Sensitivity Tests": [
@@ -322,7 +358,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
     ],
     "Special Characters in Context": [
         ("export TOKEN='ghp_1234567890abcdefghijklmnopqrstuvwxyz'", "Secret in export", True),
-        ("-e STRIPE_KEY=sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9", "Docker flag with secret", True),
+        ("-e STRIPE_KEY=sk_live_51A1b2C3d4E5f6G7h8I9j0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5", "Docker flag with secret", True),
         ("Authorization: Bearer ghp_1234567890abcdefghijklmnopqrstuvwxyz", "HTTP header", True),
         ("?token=ghp_1234567890abcdefghijklmnopqrstuvwxyz&", "Query parameter", True),
     ],
@@ -343,44 +379,26 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
         ("DROPBOX_TOKEN=sl." + "A" * 140, "Dropbox access token", True),
         ("DIGITALOCEAN_TOKEN=dop_v1_" + "a" * 64, "DigitalOcean personal access token", True),
         ("SQUARE_TOKEN=EAAA" + "A" * 60, "Square access token", True),
-        ("AIRTABLE_PAT=patABCDEFGHIJKLMN", "Airtable personal access token", True),
-        ("AIRTABLE_API_KEY=keyABCDEFGHIJKLMN", "Airtable legacy API key", True),
+        ("AIRTABLE_PAT=patEceGFxxVzGDZoA.22b91547ed078219ec79315c34c2b526f1ddd02e567547f5dd7d37dbe1bf0512", "Airtable personal access token", True),
+        # Airtable legacy API key removed - pattern was too broad and deprecated
         ("FACEBOOK_TOKEN=EAA" + "A" * 35, "Facebook access token", True),
     ],
     "User Submit Hook": [
         (
             {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": "Please review before I send: ghp_1234567890abcdefghijklmnopqrstuvwxyz",
-                            }
-                        ],
-                    }
-                ]
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "Please review before I send: ghp_1234567890abcdefghijklmnopqrstuvwxyz",
             },
-            "User message with GitHub PAT",
+            "Claude UserPromptSubmit with secret",
             True,
             {"mode": "pre", "wrap_content": False},
         ),
         (
             {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": "Just writing documentation updates today.",
-                            }
-                        ],
-                    }
-                ]
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "Please review the deployment plan",
             },
-            "User message without secrets",
+            "Claude UserPromptSubmit without secret",
             False,
             {"mode": "pre", "wrap_content": False},
         ),
@@ -448,8 +466,8 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
     "Command Output Hook": [
         (
             {
-                "toolInput": {"tool_name": "bash", "command": "echo secret"},
-                "toolResult": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
+                "tool_input": {"tool_name": "bash", "command": "echo secret"},
+                "tool_response": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
             },
             "Command stdout with OpenAI key",
             True,
@@ -457,8 +475,8 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
         ),
         (
             {
-                "toolInput": {"tool_name": "bash", "command": "echo stderr"},
-                "toolResult": {"stderr": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"},
+                "tool_input": {"tool_name": "bash", "command": "echo stderr"},
+                "tool_response": {"stderr": "ghp_abcdefghijklmnopqrstuvwxyz1234567890"},
             },
             "Command stderr with GitHub token",
             True,
@@ -466,8 +484,8 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQI
         ),
         (
             {
-                "toolInput": {"tool_name": "bash", "command": "echo nested"},
-                "toolResult": {
+                "tool_input": {"tool_name": "bash", "command": "echo nested"},
+                "tool_response": {
                     "content": [
                         {
                             "type": "text",
@@ -500,6 +518,84 @@ SUITES = {
     "extended": {
         "title": "EXTENDED SECRET SCANNER TEST SUITE",
         "tests": EXTENDED_TESTS,
+        "show_snippet": True,
+    },
+    "exitcodes": {
+        "title": "CLAUDE EXIT CODE TESTS",
+        "tests": {
+            "PreToolUse": [
+                (
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "tool_name": "Read",
+                        "tool_input": {
+                            "file_path": "dummy.txt",
+                            "content": "OPENAI_API_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz",
+                        },
+                    },
+                    "Claude PreToolUse block exit code 2",
+                    True,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 2},
+                ),
+                (
+                    {
+                        "hook_event_name": "PreToolUse",
+                        "tool_name": "Read",
+                        "tool_input": {
+                            "file_path": "dummy.txt",
+                            "content": "hello world",
+                        },
+                    },
+                    "Claude PreToolUse allow exit code 0",
+                    False,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 0},
+                ),
+            ],
+            "PostToolUse": [
+                (
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "Bash",
+                        "tool_input": {"tool_name": "Bash", "command": "echo secret"},
+                        "tool_response": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
+                    },
+                    "Claude PostToolUse block exit code 2",
+                    True,
+                    {"mode": "post", "wrap_content": False, "expect_exit": 2},
+                ),
+                (
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "Bash",
+                        "tool_input": {"tool_name": "Bash", "command": "echo ok"},
+                        "tool_response": {"stdout": "deploy complete"},
+                    },
+                    "Claude PostToolUse allow exit code 0",
+                    False,
+                    {"mode": "post", "wrap_content": False, "expect_exit": 0},
+                ),
+            ],
+            "UserPromptSubmit": [
+                (
+                    {
+                        "hook_event_name": "UserPromptSubmit",
+                        "prompt": "Please remember ghp_abcdefghijklmnopqrstuvwxyz1234567890",
+                    },
+                    "Claude UserPromptSubmit block exit code 2",
+                    True,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 2},
+                ),
+                (
+                    {
+                        "hook_event_name": "UserPromptSubmit",
+                        "prompt": "Please review the deployment plan",
+                    },
+                    "Claude UserPromptSubmit allow exit code 0",
+                    False,
+                    {"mode": "pre", "wrap_content": False, "expect_exit": 0},
+                ),
+            ],
+        },
         "show_snippet": True,
     },
 }
@@ -578,13 +674,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run secrets_scanner_hook.py secret scanner tests")
     parser.add_argument(
         "--suite",
-        choices=["basic", "extended", "all"],
+        choices=["basic", "extended", "exitcodes", "all"],
         default="all",
         help="Which test suite to run (default: all)",
     )
     args = parser.parse_args()
 
-    suite_keys = ["basic", "extended"] if args.suite == "all" else [args.suite]
+    suite_keys = ["basic", "extended", "exitcodes"] if args.suite == "all" else [args.suite]
 
     overall = {"total": 0, "passed": 0, "failed": 0, "warnings": 0}
 

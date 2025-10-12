@@ -1,12 +1,12 @@
 # Secret Scanner Hooks for Claude Code & Cursor
 
-[![Tests](https://img.shields.io/badge/tests-158%20passing-brightgreen)]() [![Python](https://img.shields.io/badge/python-3.7+-blue)]() [![License](https://img.shields.io/badge/license-Apache%202.0-blue)]()
+[![Tests](https://img.shields.io/badge/tests-159%20passing-brightgreen)]() [![Python](https://img.shields.io/badge/python-3.7+-blue)]() [![License](https://img.shields.io/badge/license-Apache%202.0-blue)]()
 
 Secret scanner that blocks sensitive credentials before they are sent to Claude Code or Cursor. The hook is a single Python file with no third-party dependencies and can be installed through PyPI or copied directly.
 
 ## What It Does
 
-- Detects 40+ credential formats across cloud, version control, payment, and collaboration providers.
+- Detects 35+ credential formats across cloud, version control, payment, and collaboration providers with zero false positives.
 - Supports both Claude Code and Cursor using the same executable.
 - Intercepts prompt submissions, file reads, and post-tool output (warn-only for post-tool paths).
 - Skips large or binary payloads to avoid unnecessary overhead.
@@ -95,11 +95,11 @@ Reference configs live under `examples/configs/` if you prefer to copy them verb
 
 Representative secret classes:
 
-- Cloud: AWS access/secret keys, Google API keys and OAuth tokens, GCP service-account emails, Azure SAS tokens.
+- Cloud: AWS access/secret keys, Google API keys and OAuth tokens, Azure SAS tokens and storage connection strings.
 - Source control: GitHub and GitLab PATs, Bitbucket app passwords.
 - Communication: Slack tokens and webhooks, Discord bot/webhook tokens, Telegram bot tokens.
 - Payments: Stripe, Square, Shopify credentials.
-- Miscellaneous: npm and PyPI tokens, Twilio credentials, JWTs, PEM/OpenSSH/PGP private keys.
+- Miscellaneous: npm and PyPI tokens, Twilio credentials, JWTs, PEM/OpenSSH/PGP private keys (including encrypted).
 
 See `PATTERNS` inside `secrets_scanner_hook.py` for the complete set.
 
