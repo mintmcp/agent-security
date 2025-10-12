@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 GREEN = '\033[92m'
@@ -30,7 +31,7 @@ def run_hook_test(
     *,
     mode: str = "post",
     wrap_content: bool = True,
-    expect_exit: int | None = None,
+    expect_exit: Optional[int] = None,
 ):
     """Run the hook with synthetic data and report detection."""
 
