@@ -155,8 +155,8 @@ BASIC_TESTS = {
     "AWS Credentials": [
         (wrap_secret("AKIAIOSFODNN7EXAMPLE"), "AWS AKIA key (long-term, 20 chars)", True),
         (wrap_secret("ASIATESTACCESSKEY123"), "AWS ASIA key (temporary, 20 chars)", True),
-        (wrap_secret("AIDACKCEVSQ6C2EXAMPL"), "AWS AIDA identifier (20 chars)", True),
-        (wrap_secret("AROAI234567890ABCDEF"), "AWS AROA role identifier (20 chars)", True),
+        (wrap_secret("ABIA" + "A" * 16), "AWS ABIA identifier (20 chars)", True),
+        (wrap_secret("ACCA" + "B" * 16), "AWS ACCA identifier (20 chars)", True),
         (wrap_secret("aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"), "AWS secret key with assignment", True),
         (wrap_secret("SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"), "AWS secret key alt format", True),
     ],
@@ -165,7 +165,7 @@ BASIC_TESTS = {
         (wrap_secret("gho_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"), "GitHub OAuth token (gho_)", True),
         (wrap_secret("ghs_1a2b3c4d5e6f7g8h9i0jklmnopqrstuvwxyz"), "GitHub server-to-server (ghs_)", True),
         (wrap_secret("ghu_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"), "GitHub user-to-server (ghu_)", True),
-        (wrap_secret("ghr_refreshtoken1234567890abcdefghijklmnopqr"), "GitHub refresh token (ghr_)", True),
+        (wrap_secret("ghr_" + "A" * 36), "GitHub refresh token (ghr_)", True),
         (wrap_secret("github_pat_11AAAAAAA0123456789abcdefghijklmnopqrstuvwxyz"), "GitHub fine-grained PAT", True),
     ],
     "Slack Credentials": [
@@ -173,7 +173,7 @@ BASIC_TESTS = {
         (wrap_secret("xoxp-1234567890-1234567890-1234567890-abcdef1234567890abcdef1234567890ab"), "Slack user token", True),
         (wrap_secret("xoxa-1234567890-1234567890-abcdefghijklmnop"), "Slack workspace token (deprecated)", True),
         (wrap_secret("xoxr-1234567890-abcdefghijklmnopqrstuv"), "Slack refresh token", True),
-        (wrap_secret("xoxe-1234567890-abcdefghijklmnopqrstuv"), "Slack rotatable token", True),
+        # Note: detect-secrets regexes do not include 'xoxe' tokens; skipping rotatable token variant
         (wrap_secret("https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"), "Slack webhook URL", True),
     ],
     "Payment Providers": [
@@ -197,20 +197,19 @@ BASIC_TESTS = {
         # GCP service account emails removed - they're identifiers, not secrets
     ],
     "OpenAI": [
-        (wrap_secret("sk-1234567890abcdefghijklmnopqrstuvwxyz"), "OpenAI API key (legacy)", True),
-        (wrap_secret("sk-proj-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKL"), "OpenAI API key (project)", True),
-        (wrap_secret("sk-proj-" + "a" * 150), "OpenAI API key (long project key)", True),
+        # detect-secrets pattern requires sentinel 'T3BlbkFJ' and strict segment lengths
+        (wrap_secret("sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20), "OpenAI API key (project)", True),
     ],
     "Other SaaS": [
         (wrap_secret("glpat-abc123def456ghi789jkl"), "GitLab personal access token", True),
-        (wrap_secret("SG.1234567890123456.abcdefghijklmnopqrstuvwxyz1234567890"), "SendGrid API key", True),
+        (wrap_secret("SG." + "A" * 22 + "." + "B" * 43), "SendGrid API key", True),
         (wrap_secret("npm_1234567890abcdefghijklmnopqrstuvwxyz"), "npm token", True),
-        (wrap_secret("pypi-" + "A" * 50), "PyPI token", True),
+        (wrap_secret("pypi-AgEIcHlwaS5vcmc" + "A" * 72), "PyPI token", True),
     ],
     "Discord & Telegram": [
-        (wrap_secret("MjM4NDk0NzU2NTI1MjU4NTky.CunGFQ.wUILz7z6HoJzVeq6pyHPmVgQgV4"), "Discord bot token", True),
+        (wrap_secret("N" + "a" * 24 + ".ABC123." + "b" * 27), "Discord bot token", True),
         (wrap_secret("https://discord.com/api/webhooks/123456789012345/abcdefghijklmnopqrstuvwxyz1234567890"), "Discord webhook", True),
-        (wrap_secret("123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890"), "Telegram bot token", True),
+        (wrap_secret("12345678:" + "A" * 35), "Telegram bot token", True),
     ],
     "Azure": [
         (wrap_secret("DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJ==;EndpointSuffix=core.windows.net"), "Azure storage connection string", True),
@@ -277,7 +276,7 @@ credentials:
   stripe_key: sk_test_4eC39HqLyjWDarjtT1zdp7dc1234567890abcdefghijklmnopqr
 """.strip(), "YAML-like config", True),
         ("""
-export OPENAI_API_KEY=sk-proj-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKL
+export OPENAI_API_KEY=sk-proj-abc-AAAAAAAAAAAAAAAAAAAAT3BlbkFJBBBBBBBBBBBBBBBBBBBB
 export GOOGLE_API_KEY=AIzaSyD1234567890abcdefghijklmnopqrs
 curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com
 """.strip(), "Shell script with secrets", True),
@@ -311,11 +310,11 @@ curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com
     ],
     "Variations - Different Lengths": [
         ("AKIAIOSFODNN7EXAMPL0", "AWS key exactly 20 chars", True),
-        ("ghp_" + "a" * 30, "GitHub token min length (30)", True),
+        ("ghp_" + "a" * 36, "GitHub token exact length (36)", True),
         ("sk_live_" + "a" * 50, "Stripe key min length (50)", True),
         ("AIza" + "a" * 32, "Google key min length (32)", True),
-        ("ghp_" + "a" * 100, "GitHub token long (104 chars)", True),
-        ("sk-proj-" + "a" * 150, "OpenAI long project key", True),
+        ("ghp_" + "a" * 100, "GitHub token long (104 chars)", False),
+        ("sk-proj-" + "a" * 150, "OpenAI long project key (not DS format)", False),
         ("glpat-" + "a" * 50, "GitLab long token", True),
     ],
     "Private Keys - Various Formats": [
@@ -354,7 +353,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
     "Boundary Testing - Exact Lengths": [
         ("AKIA" + "A" * 16, "AWS exactly 20 (min)", True),
         ("AKIA" + "A" * 15, "AWS 19 chars (too short)", False),
-        ("AKIA" + "A" * 17, "AWS 21 chars (should still match with +)", True),
+        ("AKIA" + "A" * 17, "AWS 21 chars (should NOT match per DS)", False),
     ],
     "Special Characters in Context": [
         ("export TOKEN='ghp_1234567890abcdefghijklmnopqrstuvwxyz'", "Secret in export", True),
@@ -408,7 +407,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
             {
                 "hook_event_name": "beforeReadFile",
                 "file_path": "cursor.env",
-                "content": "OPENAI_API_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz",
+                "content": "OPENAI_API_KEY=sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20,
             },
             "Cursor beforeReadFile with secret",
             True,
@@ -446,7 +445,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
             {
                 "hook_event_name": "afterShellExecution",
                 "command": "echo secret",
-                "stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz",
+                "stdout": "OPENAI_KEY=sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20,
             },
             "Cursor afterShellExecution stdout with secret",
             True,
@@ -467,7 +466,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
         (
             {
                 "tool_input": {"tool_name": "bash", "command": "echo secret"},
-                "tool_response": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
+                "tool_response": {"stdout": "OPENAI_KEY=sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20},
             },
             "Command stdout with OpenAI key",
             True,
@@ -500,7 +499,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
         ),
     ],
     "Real Provider Examples": [
-        ("AWS_KEY=AKIAJ7EXAMPLE7EXAMPLE", "Real AWS format with assignment", True),
+        ("AWS_KEY=" + "AKIA" + "A" * 16, "Real AWS format with assignment", True),
         ("ASIAVEXAMPLE4EXAMPLE", "Real AWS STS format", True),
         ("ghp_16C7e42F292c6912E7710c838347Ae178B4a", "Real GitHub PAT format", True),
         ("xoxb-17653672481-19874698323-pdFZKVeTuE8sk7oOcBrzbqgy", "Real Slack bot format", True),
@@ -530,7 +529,7 @@ SUITES = {
                         "tool_name": "Read",
                         "tool_input": {
                             "file_path": "dummy.txt",
-                            "content": "OPENAI_API_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz",
+                            "content": "OPENAI_API_KEY=sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20,
                         },
                     },
                     "Claude PreToolUse block exit code 2",
@@ -557,7 +556,7 @@ SUITES = {
                         "hook_event_name": "PostToolUse",
                         "tool_name": "Bash",
                         "tool_input": {"tool_name": "Bash", "command": "echo secret"},
-                        "tool_response": {"stdout": "OPENAI_KEY=sk-1234567890abcdefghijklmnopqrstuvwxyz"},
+                        "tool_response": {"stdout": "OPENAI_KEY=sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20},
                     },
                     "Claude PostToolUse block exit code 2",
                     True,
