@@ -16,7 +16,7 @@ BLUE = '\033[94m'
 RESET = '\033[0m'
 
 
-HOOK_PATH = Path(__file__).resolve().parent / "secrets_scanner_hook.py"
+HOOK_PATH = Path(__file__).resolve().parent.parent / "hooks" / "secrets_scanner_hook.py"
 
 
 def wrap_secret(secret_value: str) -> str:

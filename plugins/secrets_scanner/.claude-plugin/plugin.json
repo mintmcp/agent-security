@@ -1,0 +1,11 @@
+{
+  "name": "secrets-scanner",
+  "version": "1.0.0",
+  "description": "Detects 35+ credential formats across cloud, version control, payment, and collaboration providers with zero false positives",
+  "author": {
+    "name": "MintMCP",
+    "email": "support@mintmcp.com"
+  },
+  "license": "Apache-2.0",
+  "keywords": ["security", "secrets", "credentials", "scanning", "hooks"]
+}

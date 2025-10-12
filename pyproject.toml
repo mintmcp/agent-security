@@ -4,20 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-secret-scan"
-version = "0.1.5"
-description = "Secret scanning hooks for Claude Code and Cursor with zero dependencies."
+version = "0.1.6"
+description = "Secret scanning hooks for Claude Code and Cursor with zero dependencies. Part of the agent-security plugin marketplace."
 readme = "README.md"
 requires-python = ">=3.7"
 license = {file = "LICENSE"}
 authors = [
-  {name = "Claude Secret Scanner Maintainers"}
+  {name = "MintMCP", email = "support@mintmcp.com"}
 ]
 keywords = [
   "secrets",
   "security",
   "claude",
   "cursor",
-  "hooks"
+  "hooks",
+  "agent-security"
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -36,13 +37,18 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mintmcp/secrets-scanner"
-Issues = "https://github.com/mintmcp/secrets-scanner/issues"
-Source = "https://github.com/mintmcp/secrets-scanner"
+Homepage = "https://github.com/mintmcp/agent-security"
+Issues = "https://github.com/mintmcp/agent-security/issues"
+Source = "https://github.com/mintmcp/agent-security"
+Marketplace = "https://github.com/mintmcp/agent-security"
 
 [project.scripts]
-claude-secret-scan = "secrets_scanner_hook:console_main_claude"
-cursor-secret-scan = "secrets_scanner_hook:console_main_cursor"
+claude-secret-scan = "plugins.secrets_scanner.hooks.secrets_scanner_hook:console_main_claude"
+cursor-secret-scan = "plugins.secrets_scanner.hooks.secrets_scanner_hook:console_main_cursor"
 
 [tool.setuptools]
-py-modules = ["secrets_scanner_hook"]
+packages = ["plugins.secrets_scanner.hooks"]
+package-dir = {"" = "."}
+
+[tool.setuptools.package-data]
+"plugins.secrets_scanner.hooks" = ["*.py"]

@@ -1,0 +1,46 @@
+{
+  "description": "Secret scanner that blocks sensitive credentials before they are sent to Claude Code or Cursor",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/secrets_scanner_hook.py --mode=pre --client=claude"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/secrets_scanner_hook.py --mode=pre --client=claude"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/secrets_scanner_hook.py --mode=post --client=claude"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/secrets_scanner_hook.py --mode=post --client=claude"
+          }
+        ]
+      }
+    ]
+  }
+}
