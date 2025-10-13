@@ -22,7 +22,7 @@ __all__ = [
     "console_main_cursor",
 ]
 
-__version__ = "0.1.5"
+__version__ = "0.1.7"
 
 # -----------------------------------------------------------------------------
 # Configuration and Patterns
