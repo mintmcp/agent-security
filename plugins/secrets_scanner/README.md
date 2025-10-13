@@ -43,7 +43,10 @@ See `tests/read_hook_test.py` and `TESTING.md` for examples and guidance.
 ## Notes
 
 - Regex detection is best-effort. Rotate real secrets immediately.
-- Python 3.7+. No external dependencies.
+- No external dependencies. Uses only Python's built-in regexes and simple pattern matching.
+- Runs completely locally. No code, prompts, or files leave your system.
+- Curious how it works? See `hooks/secrets_scanner_hook.py` for the core implementation and patterns.
+- Python 3.7+.
 
 ## License
 
