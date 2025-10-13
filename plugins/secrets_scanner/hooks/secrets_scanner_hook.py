@@ -77,10 +77,10 @@ PATTERNS = {
     # JWT and keys
     "JWT Token": re.compile(r"\beyJ[A-Za-z0-9\-_=]+\.[A-Za-z0-9\-_=]+\.?[A-Za-z0-9\-_.+/=]*?\b"),
     "Private Key (PEM)": re.compile(r"-----BEGIN (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----\s*\n(?:(?:[A-Za-z0-9\-]+:[^\n]*\n)*\s*)?(?:[A-Za-z0-9+/=]{40,}\s*\n)+-----END (?:RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----"),
-    "OpenSSH Private Key": re.compile(r"-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]+?-----END OPENSSH PRIVATE KEY-----"),
-    "PGP Private Key": re.compile(r"-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]+?-----END PGP PRIVATE KEY BLOCK-----"),
-    "SSH2 Encrypted Private Key": re.compile(r"-----BEGIN SSH2 ENCRYPTED PRIVATE KEY-----[\s\S]+?-----END SSH2 ENCRYPTED PRIVATE KEY-----"),
-    "PuTTY Private Key": re.compile(r"PuTTY-User-Key-File-2"),
+    "OpenSSH Private Key": re.compile(r"-----BEGIN OPENSSH PRIVATE KEY-----\s*\n(?:[A-Za-z0-9+/=]{40,}\s*\n)+-----END OPENSSH PRIVATE KEY-----"),
+    "PGP Private Key": re.compile(r"-----BEGIN PGP PRIVATE KEY BLOCK-----\s*\n(?:[A-Za-z0-9+/=]{40,}\s*\n)+-----END PGP PRIVATE KEY BLOCK-----"),
+    "SSH2 Encrypted Private Key": re.compile(r"-----BEGIN SSH2 ENCRYPTED PRIVATE KEY-----\s*\n(?:[A-Za-z0-9+/=]{40,}\s*\n)+-----END SSH2 ENCRYPTED PRIVATE KEY-----"),
+    "PuTTY Private Key": re.compile(r"(?:^|\n)PuTTY-User-Key-File-\d+:\s*\S+"),
 
     # Other common tokens
     "Google API Key": re.compile(r"\bAIza[0-9A-Za-z\-_\\]{32,40}\b"),

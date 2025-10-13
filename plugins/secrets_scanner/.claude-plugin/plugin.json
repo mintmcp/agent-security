@@ -1,7 +1,7 @@
 {
   "name": "secrets-scanner",
   "version": "1.0.0",
-  "description": "Detects 35+ credential formats across cloud, version control, payment, and collaboration providers with zero false positives",
+  "description": "Detects 35+ credential formats across cloud, version control, payment, and collaboration providers",
   "author": {
     "name": "MintMCP",
     "email": "support@mintmcp.com"

@@ -6,7 +6,7 @@ Secret scanner that blocks sensitive credentials before they are sent to Claude 
 
 ## What It Does
 
-- Detects 35+ credential formats across cloud, version control, payment, and collaboration providers with zero false positives.
+- Detects 35+ credential formats across cloud, version control, payment, and collaboration providers.
 - Supports both Claude Code and Cursor using the same executable.
 - Intercepts prompt submissions, file reads, and post-tool output (warn-only for post-tool paths).
 - Skips large or binary payloads to avoid unnecessary overhead.

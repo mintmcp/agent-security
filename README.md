@@ -8,10 +8,10 @@ Security plugin marketplace for AI agents including Claude Code and Cursor. Prov
 
 ### Secrets Scanner
 
-Detects 35+ credential formats across cloud, version control, payment, and collaboration providers with zero false positives. Blocks sensitive credentials before they are sent to Claude Code or Cursor.
+Detects 35+ credential formats across cloud, version control, payment, and collaboration providers. Blocks sensitive credentials before they are sent to Claude Code or Cursor.
 
 **Key Features:**
-- Zero false positives across 159 test cases
+- Comprehensive test coverage with 159 test cases
 - Intercepts prompt submissions, file reads, and tool outputs
 - No third-party dependencies
 - Python 3.7+ compatible
