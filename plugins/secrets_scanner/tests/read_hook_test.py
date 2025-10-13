@@ -200,6 +200,15 @@ BASIC_TESTS = {
         # detect-secrets pattern requires sentinel 'T3BlbkFJ' and strict segment lengths
         (wrap_secret("sk-proj-abc-" + "A" * 20 + "T3BlbkFJ" + "B" * 20), "OpenAI API key (project)", True),
     ],
+    "Anthropic": [
+        (wrap_secret("sk-ant-api03-" + "A" * 95), "Anthropic API key (95 chars)", True),
+        (wrap_secret("sk-ant-api01-" + "B" * 90), "Anthropic API key (90 chars, min length)", True),
+        (wrap_secret("sk-ant-api99-" + "C" * 100), "Anthropic API key (100 chars)", True),
+        (wrap_secret("sk-ant-api3-" + "D" * 95), "Anthropic API key (single digit version)", True),
+        (wrap_secret("sk-ant-api03-a7phpUJ3Ibcx0jDdHrKqzvxb19F7WjmgpDa--2DZXjL_5UnhMDb8gyKo8-CXR58wKuN67Apugf_lShDmoa5IuQ-QaxvuwAA"), "Anthropic API key (real format)", True),
+        (wrap_secret("sk-ant-api03-" + "X" * 89), "Anthropic API key (89 chars, too short)", False),
+        (wrap_secret("sk-ant-api-" + "Y" * 95), "Anthropic API key (no version number)", False),
+    ],
     "Other SaaS": [
         (wrap_secret("glpat-abc123def456ghi789jkl"), "GitLab personal access token", True),
         (wrap_secret("SG." + "A" * 22 + "." + "B" * 43), "SendGrid API key", True),
@@ -504,6 +513,7 @@ MIIFLTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvLKvMKqXCzGYAgIH
         ("ghp_16C7e42F292c6912E7710c838347Ae178B4a", "Real GitHub PAT format", True),
         ("xoxb-17653672481-19874698323-pdFZKVeTuE8sk7oOcBrzbqgy", "Real Slack bot format", True),
         ("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", "Real long Stripe key format", True),
+        ("ANTHROPIC_API_KEY=sk-ant-api03-a7phpUJ3Ibcx0jDdHrKqzvxb19F7WjmgpDa--2DZXjL_5UnhMDb8gyKo8-CXR58wKuN67Apugf_lShDmoa5IuQ-QaxvuwAA", "Real Anthropic API key format", True),
     ],
 }
 

@@ -22,7 +22,7 @@ __all__ = [
     "console_main_cursor",
 ]
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 # -----------------------------------------------------------------------------
 # Configuration and Patterns
@@ -85,6 +85,7 @@ PATTERNS = {
     # Other common tokens
     "Google API Key": re.compile(r"\bAIza[0-9A-Za-z\-_\\]{32,40}\b"),
     "Google OAuth Token": re.compile(r"\bya29\.[0-9A-Za-z\-_]{20,}\b"),
+    "Anthropic API Key": re.compile(r"\bsk-ant-api\d+-[A-Za-z0-9_-]{90,}\b"),
     "OpenAI API Key": re.compile(r"\bsk-[A-Za-z0-9-_]*[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}\b"),
     "Password Assignment": re.compile(r"(?i)\b(pass(word)?|pwd)\s*[:=]\s*['\"][^'\"\n]{8,}['\"]"),
     "Mailchimp API Key": re.compile(r"\b[0-9a-z]{32}-us[0-9]{1,2}\b"),
