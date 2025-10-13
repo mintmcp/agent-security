@@ -4,7 +4,9 @@ Blocks sending secrets to Claude Code or Cursor by scanning inputs and outputs.
 
 ## Installation
 
-### Marketplace
+### Claude Code Plugin Marketplace
+
+Install via the [Claude Code plugin marketplace](https://www.anthropic.com/news/claude-code-plugins):
 
 ```bash
 /plugin marketplace add mintmcp/agent-security
