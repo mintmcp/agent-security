@@ -2,13 +2,15 @@
 
 Security plugins for Claude Code and Cursor. This repository currently provides a secrets scanner plugin.
 
-## Why We Built This
+## Motivation
 
-Coding agents are powerful, but we’ve repeatedly seen them read and propagate sensitive data during everyday work. That can be acceptable for casual “vibe coding” experiments, but it’s not acceptable for production software engineering. We built this to make accidental leakage much harder: a standalone, local-first scanner with minimal footprint (no external dependencies, regex-only), running as editor/agent hooks entirely on your machine, and easy to set up so teams can adopt it without friction.
+Coding agents are powerful, but we've repeatedly seen them read and propagate sensitive data during everyday work. That can be acceptable for casual "vibe coding" experiments, but it's not acceptable for production software engineering. We built this to make accidental leakage much harder: a standalone, local-first scanner with minimal footprint (no external dependencies, regex-only), running as editor/agent hooks entirely on your machine, and easy to set up so teams can adopt it without friction.
 
 ## Install
 
-### Marketplace
+### Claude Code Plugin Marketplace
+
+Install via the [Claude Code plugin marketplace](https://www.anthropic.com/news/claude-code-plugins):
 
 ```bash
 /plugin marketplace add mintmcp/agent-security
