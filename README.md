@@ -1,10 +1,18 @@
 # Agent Security Plugins
 
+[![PyPI version](https://badge.fury.io/py/claude-secret-scan.svg)](https://badge.fury.io/py/claude-secret-scan)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Dependencies](https://img.shields.io/badge/dependencies-zero-success.svg)]()
+[![CI](https://github.com/mintmcp/agent-security/workflows/CI/badge.svg)](https://github.com/mintmcp/agent-security/actions)
+[![Downloads](https://pepy.tech/badge/claude-secret-scan)](https://pepy.tech/project/claude-secret-scan)
+
 Security plugins for Claude Code and Cursor. This repository currently provides a secrets scanner plugin.
 
 ## Motivation
 
 Coding agents are powerful, but we've repeatedly seen them read and propagate sensitive data during everyday work. That can be acceptable for casual "vibe coding" experiments, but it's not acceptable for production software engineering. We built this to make accidental leakage much harder: a standalone, local-first scanner with minimal footprint (no external dependencies, regex-only), running as editor/agent hooks entirely on your machine, and easy to set up so teams can adopt it without friction.
+
+![Claude Code blocked from reading .env file with secrets](assets/claude-blocked.png)
 
 ## Install
 
