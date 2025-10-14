@@ -1,8 +1,8 @@
 # Agent Security Plugins
 
 [![PyPI version](https://badge.fury.io/py/claude-secret-scan.svg)](https://badge.fury.io/py/claude-secret-scan)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Dependencies](https://img.shields.io/badge/dependencies-zero-success.svg)]()
 [![CI](https://github.com/mintmcp/agent-security/workflows/CI/badge.svg)](https://github.com/mintmcp/agent-security/actions)
 [![Downloads](https://pepy.tech/badge/claude-secret-scan)](https://pepy.tech/project/claude-secret-scan)
 
