@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
-"""Secret scanner for Claude Code and Cursor hooks (single-file).
+"""Secret scanner core for Claude Code and Cursor hooks.
 
-Provides pre/post hook scanning with minimal dependencies. Designed to be
-portable (copy one file) while readable and maintainable.
+This mirrors the hook used by the plugin, providing CLI entrypoints for
+Claude (`claude-secret-scan`) and compatibility with Cursor via a separate
+wrapper package that depends on this one.
 """
 
 from __future__ import annotations
@@ -30,9 +30,6 @@ __version__ = "0.1.10"
 
 MAX_SCAN_BYTES = 5 * 1024 * 1024  # 5MB cap per file
 SAMPLE_BYTES = 4096  # used for binary sniffing
-
-
-# (strict schema access; direct .get only)
 
 
 PATTERNS = {
@@ -89,7 +86,6 @@ PATTERNS = {
     "OpenAI API Key": re.compile(r"\bsk-[A-Za-z0-9-_]*[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}\b"),
     "Password Assignment": re.compile(r"(?i)\b(pass(word)?|pwd)\s*[:=]\s*['\"][^'\"\n]{8,}['\"]"),
     "Mailchimp API Key": re.compile(r"\b[0-9a-z]{32}-us[0-9]{1,2}\b"),
-    # From detect-secrets basic_auth plugin, limits username/password chars to avoid false positives
     "Basic Auth Credentials": re.compile(r"://[^:/?#\[\]@!$&'()*+,;=\s]+:([^:/?#\[\]@!$&'()*+,;=\s]+)@"),
     "Databricks PAT": re.compile(r"\bdapi[A-Za-z0-9]{32}\b"),
     "Firebase FCM Server Key": re.compile(r"\bAAAA[A-Za-z0-9_-]{7,}:[A-Za-z0-9_-]{140,}\b"),
@@ -105,9 +101,6 @@ PATTERNS = {
     "Facebook Access Token": re.compile(r"\bEAA[A-Za-z0-9]{30,}\b"),
 }
 
-# -----------------------------------------------------------------------------
-# Scanning utilities
-# -----------------------------------------------------------------------------
 
 def is_probably_binary(block: bytes) -> bool:
     if b"\x00" in block:
@@ -128,7 +121,6 @@ def should_scan_file(path: str) -> bool:
     return not is_probably_binary(head)
 
 
- 
 def scan_text(text: str, path: str):
     findings = []
     line_starts = [0]
@@ -181,10 +173,6 @@ def build_findings_message(findings, heading: str, limit: int = 5) -> str:
     return out
 
 
-# -----------------------------------------------------------------------------
-# Client adapters (Cursor / Claude)
-# -----------------------------------------------------------------------------
-
 def detect_hook_type(hook_input):
     if not isinstance(hook_input, dict):
         return "claude_code"
@@ -219,9 +207,6 @@ def detect_hook_type(hook_input):
     return "claude_code"
 
 
-# Removed legacy helpers; using direct documented fields only
-
-
 def _detect_tool_name(tool_input) -> str:
     if isinstance(tool_input, str) and tool_input.strip():
         return tool_input
@@ -235,7 +220,6 @@ def _detect_tool_name(tool_input) -> str:
 
 
 def collect_cursor_post_payloads(hook_input, event_name: str | None):
-    """Extract Cursor post-event outputs from documented fields."""
     evt = (event_name or "").strip()
     payloads = []
 
@@ -264,7 +248,6 @@ def collect_cursor_post_payloads(hook_input, event_name: str | None):
 
 
 def collect_claude_post_payloads(hook_input):
-    """Extract Claude post-event outputs from documented fields."""
     tool_input = hook_input.get("tool_input") or {}
     tool_result = hook_input.get("tool_response") or {}
     tool_name = (hook_input.get("tool_name") or _detect_tool_name(tool_input) or "").strip()
@@ -280,7 +263,6 @@ def collect_claude_post_payloads(hook_input):
             payloads.append(("[bash stderr]", stderr))
         return payloads
 
-    # Read tool or similar may return content directly
     if isinstance(tool_result, dict):
         content = tool_result.get("content")
         if isinstance(content, str) and content.strip():
@@ -348,57 +330,51 @@ def format_claude_response(action: str, message: str | None, hook_event: str):
         elif msg:
             out["hookSpecificOutput"]["additionalContext"] = msg
         return out
-    out = {"action": action}
     if msg:
-        out["message"] = msg
-    return out
+        return {"hookSpecificOutput": {"additionalContext": msg}}
+    return {}
 
 
-# -----------------------------------------------------------------------------
-# CLI
-# -----------------------------------------------------------------------------
-
-def _emit(hook_type: str, hook_event: str, action: str, message: str | None, event_name: str | None = None, *, allow_code=0, block_code=2, warn_code=1):
+def _emit(hook_type: str, hook_event: str, action: str, message: str | None, event_name: str | None = None):
     if hook_type == "cursor":
-        print(json.dumps(format_cursor_response(action, message, event_name)))
-        return
-    payload = format_claude_response(action, message, hook_event)
-    text = json.dumps(payload)
-    if action == "block":
-        sys.stderr.write(text + "\n")
-        sys.stderr.flush()
-        sys.exit(block_code)
+        payload = format_cursor_response(action, message, event_name)
+        print(json.dumps(payload))
     else:
-        sys.stdout.write(text + "\n")
-        sys.stdout.flush()
-        sys.exit(allow_code)
+        payload = format_claude_response(action, message, hook_event)
+        sys.stderr.write(json.dumps(payload) + "\n")
+        sys.stderr.flush()
+        if action == "block" and hook_event == "UserPromptSubmit":
+            sys.exit(2)
 
 
 def run_pre_hook(client_override: str | None = None):
     hook_type = "claude_code"
+    hook_event = "UserPromptSubmit"
     event_name = None
     try:
         hook_input = json.load(sys.stdin)
         hook_type = client_override or detect_hook_type(hook_input)
-        event_name = hook_input.get("hook_event_name")
-        hook_event = event_name or ("PreToolUse" if hook_type == "claude_code" else "beforeReadFile")
+        if hook_type == "cursor":
+            event_name = (hook_input.get("hook_event_name") or "").strip()
+            hook_event = event_name
+        else:
+            hook_event = hook_input.get("hook_event_name") or hook_event
 
         findings = []
-
         if hook_type == "cursor":
-            # Cursor: extract directly per docs, avoid walking arbitrary JSON
-            evt = (event_name or "").strip()
+            evt = event_name
             if evt == "beforeReadFile":
-                file_path = hook_input.get("file_path") or ""
                 content = hook_input.get("content")
                 if isinstance(content, str) and content.strip():
-                    findings.extend(scan_text(content, file_path or "[file content]"))
-                elif file_path:
-                    try:
-                        findings.extend(scan_file(file_path))
-                    except Exception as exc:
-                        _emit(hook_type, hook_event, "block", f"Secret scan error: {exc}", event_name)
-                        return
+                    findings.extend(scan_text(content, hook_input.get("file_path") or "[content]"))
+                else:
+                    fp = hook_input.get("file_path")
+                    if isinstance(fp, str) and fp.strip():
+                        try:
+                            findings.extend(scan_file(fp))
+                        except Exception as exc:
+                            _emit(hook_type, hook_event, "block", f"Secret scan error: {exc}", event_name)
+                            return
             elif evt == "beforeSubmitPrompt":
                 prompt = hook_input.get("prompt")
                 if isinstance(prompt, str) and prompt.strip():
@@ -411,11 +387,8 @@ def run_pre_hook(client_override: str | None = None):
                 cmd = hook_input.get("command")
                 if isinstance(cmd, str) and cmd.strip():
                     findings.extend(scan_text(cmd, "[mcp command]"))
-            # No other Cursor pre-events are scanned
         else:
-            ev = hook_input.get("hook_event_name") or ""
-            ev = ev.strip()
-
+            ev = (hook_input.get("hook_event_name") or "").strip()
             if ev == "PreToolUse":
                 tool_input = hook_input.get("tool_input") or {}
                 tool_name = (hook_input.get("tool_name") or _detect_tool_name(tool_input) or "").strip()
@@ -440,12 +413,10 @@ def run_pre_hook(client_override: str | None = None):
                         content = tool_input.get("content")
                         if isinstance(content, str) and content.strip():
                             findings.extend(scan_text(content, "[tool content]"))
-
             elif ev == "UserPromptSubmit":
                 prompt = hook_input.get("prompt")
                 if isinstance(prompt, str) and prompt.strip():
                     findings.extend(scan_text(prompt, "[prompt]"))
-            # No other Claude pre-events are scanned
 
         if findings:
             _emit(hook_type, hook_event, "block", build_findings_message(findings, "SECRET DETECTED (submission blocked)"), event_name)
@@ -511,6 +482,3 @@ def console_main_claude():
 def console_main_cursor():
     main(default_client="cursor")
 
-
-if __name__ == "__main__":
-    main()
