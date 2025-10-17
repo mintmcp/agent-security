@@ -24,8 +24,22 @@ jobs:
         run: python -m pip install build
       - name: Run hook tests
         run: python3 plugins/secrets_scanner/tests/read_hook_test.py --suite basic
-      - name: Build distribution artifacts
+      - name: Build claude-secret-scan package
+        working-directory: packages/claude-secret-scan
         run: python -m build
+      - name: Install claude-secret-scan wheel
+        run: pip install packages/claude-secret-scan/dist/*.whl
+      - name: Smoke test claude-secret-scan CLI (pre)
+        run: |
+          echo '{"hook_event_name":"UserPromptSubmit","prompt":"hello"}' | claude-secret-scan --mode=pre
+      - name: Build cursor-secret-scan package
+        working-directory: packages/cursor-secret-scan
+        run: python -m build
+      - name: Install cursor-secret-scan wheel
+        run: pip install packages/cursor-secret-scan/dist/*.whl
+      - name: Smoke test cursor-secret-scan CLI (pre)
+        run: |
+          echo '{"hook_event_name":"beforeSubmitPrompt","prompt":"hello"}' | cursor-secret-scan --mode=pre
 
   publish:
     needs: test
@@ -43,7 +57,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install build
-      - name: Build distribution artifacts
+      - name: Build claude-secret-scan
+        working-directory: packages/claude-secret-scan
         run: python -m build
-      - name: Publish to PyPI
+      - name: Publish claude-secret-scan
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/claude-secret-scan/dist
+      - name: Build cursor-secret-scan
+        working-directory: packages/cursor-secret-scan
+        run: python -m build
+      - name: Publish cursor-secret-scan
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/cursor-secret-scan/dist

@@ -4,27 +4,29 @@ This document contains important notes for AI agents working on this codebase.
 
 ## Version Synchronization
 
-When bumping the version number for a release, the following files MUST be updated to keep versions in sync:
+We now publish two PyPI packages and ship a Claude plugin. When bumping versions for a release, update ALL of the following to the same version string (e.g., "0.1.10"):
 
-1. **`.claude-plugin/marketplace.json`** (line 4)
-   - Overall package version for the marketplace listing
-
-2. **`.claude-plugin/marketplace.json`** (line 14)
-   - Individual `secrets-scanner` plugin version within the plugins array
-
-3. **`pyproject.toml`** (line 7)
-   - Python package version for PyPI distribution
-
-4. **`plugins/secrets_scanner/.claude-plugin/plugin.json`** (line 3)
-   - Individual plugin metadata version
-
-All four locations should have the same version string (e.g., "0.1.8").
+1. `.claude-plugin/marketplace.json`
+   - Top-level `version`
+   - `plugins[0].version` (the `secrets-scanner` plugin)
+2. `plugins/secrets_scanner/.claude-plugin/plugin.json`
+   - `version`
+3. `plugins/secrets_scanner/hooks/secrets_scanner_hook.py`
+   - `__version__`
+4. `packages/claude-secret-scan/pyproject.toml`
+   - `[project].version`
+5. `packages/cursor-secret-scan/pyproject.toml`
+   - `[project].version` and dependency pin on `claude-secret-scan == X.Y.Z`
+6. (Legacy) Root `pyproject.toml` if still used locally
+   - `[project].version` (CI no longer builds from root)
 
 ### Version Bump Checklist
 
-- [ ] Update `.claude-plugin/marketplace.json` (package version)
-- [ ] Update `.claude-plugin/marketplace.json` (plugin version)
-- [ ] Update `pyproject.toml` (project version)
-- [ ] Update `plugins/secrets_scanner/.claude-plugin/plugin.json`
+- [ ] Update `.claude-plugin/marketplace.json` (package + plugin versions)
+- [ ] Update `plugins/secrets_scanner/.claude-plugin/plugin.json` (plugin metadata)
+- [ ] Update `plugins/secrets_scanner/hooks/secrets_scanner_hook.py` (`__version__`)
+- [ ] Update `packages/claude-secret-scan/pyproject.toml`
+- [ ] Update `packages/cursor-secret-scan/pyproject.toml` (and pin dependency)
+- [ ] Update legacy root `pyproject.toml` if necessary
 - [ ] Commit with message: "Bump version to X.Y.Z"
 - [ ] Tag release: `git tag vX.Y.Z`
