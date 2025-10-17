@@ -22,7 +22,7 @@ __all__ = [
     "console_main_cursor",
 ]
 
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 
 # -----------------------------------------------------------------------------
 # Configuration and Patterns
@@ -481,4 +481,3 @@ def console_main_claude():
 
 def console_main_cursor():
     main(default_client="cursor")
-
