@@ -1,7 +1,7 @@
 Cursor Secret Scan
 ==================
 
-Secret scanning CLI for Cursor. Blocks or warns on common credentials (cloud, source control, payment, collaboration) using zero dependencies and local regex matching. Thin wrapper that depends on `claude-secret-scan`.
+Secret scanning CLI for Cursor. Blocks or warns on common credentials (cloud, source control, payment, collaboration) using local regex matching.
 
 ![Cursor Secret Scan demo](https://github.com/mintmcp/agent-security/raw/main/assets/Cursor-Secret-Scan.gif)
 
@@ -31,7 +31,7 @@ CLI Usage
   - `echo '{"hook_event_name":"afterShellExecution","stdout":"OPENAI_API_KEY=...T3BlbkFJ..."}' | cursor-secret-scan --mode=post`
 
 How It Works
-- Uses the same core regex-based scanner as `claude-secret-scan`.
+- Regex-based scanner implemented in this project.
 - Reads only from hook JSON input or file paths provided by the hook.
 - Binary-aware scanning with size limits; local-only execution.
 
