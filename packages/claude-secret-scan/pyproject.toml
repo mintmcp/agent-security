@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-secret-scan"
-version = "0.1.13"
-description = "Secret scanning CLI for Claude Code (shared core, zero deps)"
+version = "0.1.14"
+description = "Secret scanning CLI for Claude Code"
 readme = "README.md"
 requires-python = ">=3.7"
 license = { text = "Apache-2.0" }
