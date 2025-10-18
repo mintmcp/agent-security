@@ -1,6 +1,6 @@
 {
   "name": "secrets-scanner",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Scans for common credential formats across cloud, source control, payment, and collaboration providers",
   "author": {
     "name": "MintMCP",
