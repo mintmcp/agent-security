@@ -3,7 +3,7 @@ Cursor Secret Scan
 
 Secret scanning CLI for Cursor. Blocks or warns on common credentials (cloud, source control, payment, collaboration) using zero dependencies and local regex matching. Thin wrapper that depends on `claude-secret-scan`.
 
-![Claude Code blocked from reading .env file with secrets](https://github.com/mintmcp/agent-security/raw/main/assets/claude-blocked.png)
+![Cursor Secret Scan demo](https://github.com/mintmcp/agent-security/raw/main/assets/Cursor-Secret-Scan.gif)
 
 Install
 - pipx (recommended):
