@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-secret-scan"
-version = "0.1.12"
+version = "0.1.13"
 description = "Secret scanning hooks for Claude Code and Cursor with zero dependencies. Part of the agent-security plugin marketplace."
 readme = "README.md"
 requires-python = ">=3.7"

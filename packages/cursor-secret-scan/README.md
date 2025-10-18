@@ -37,7 +37,6 @@ How It Works
 
 Notes
 - Pre hooks block; post hooks print warnings.
-- Regex detection is best-effort. Rotate any real secrets immediately.
 
 Links
 - Source, docs, and examples: https://github.com/mintmcp/agent-security

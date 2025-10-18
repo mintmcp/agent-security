@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cursor-secret-scan"
-version = "0.1.12"
+version = "0.1.13"
 description = "Secret scanning CLI for Cursor (depends on claude-secret-scan core)"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -29,7 +29,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-  "claude-secret-scan == 0.1.12"
+  "claude-secret-scan == 0.1.13"
 ]
 
 [project.urls]
