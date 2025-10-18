@@ -12,7 +12,7 @@ Security plugins for Claude Code and Cursor. This repository currently provides 
 
 Coding agents are powerful, but we've repeatedly seen them read and propagate sensitive data during everyday work. That can be acceptable for casual "vibe coding" experiments, but it's not acceptable for production software engineering. We built this to make accidental leakage much harder: a standalone, local-first scanner with minimal footprint (no external dependencies, regex-only), running as editor/agent hooks entirely on your machine, and easy to set up so teams can adopt it without friction.
 
-![Claude Code blocked from reading .env file with secrets](assets/claude-blocked.png)
+![Claude Secret Scan demo](assets/Claude-Secret-Scan.gif)
 
 ## Install
 
