@@ -92,7 +92,6 @@ Copy `examples/configs/cursor-hooks.json` to `~/.cursor/hooks.json` or configure
 ## Notes
 
 - Pre hooks block when secrets are detected. Post hooks print warnings.
-- Regex-based detection is best-effort. Rotate any real secrets immediately.
 - No external dependencies. The scanner uses only Python's built-in regexes and simple pattern matching.
 - Runs completely locally. No code, prompts, or files leave your system.
 - Curious how it works? See `plugins/secrets_scanner/hooks/secrets_scanner_hook.py` for the core implementation and patterns.

@@ -49,7 +49,6 @@ How It Works
 
 Notes
 - Pre hooks block; post hooks print warnings.
-- Regex detection is best-effort. Rotate any real secrets immediately.
 - For plugin marketplace usage and more docs, see the repository.
 
 Links
