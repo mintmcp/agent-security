@@ -1,7 +1,4 @@
-<img width="67" height="13" alt="image" src="https://github.com/user-attachments/assets/bf25f929-7095-4299-a77a-be0b6e3ee06a" />
-
-
-# Agent Security Plugins
+<img width="642" height="106" alt="image" src="https://github.com/user-attachments/assets/9aee367d-3d66-491a-9e04-a67944cb1c4c" />
 
 [![PyPI version](https://badge.fury.io/py/claude-secret-scan.svg)](https://badge.fury.io/py/claude-secret-scan)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -9,7 +6,8 @@
 [![CI](https://github.com/mintmcp/agent-security/workflows/CI/badge.svg)](https://github.com/mintmcp/agent-security/actions)
 [![Downloads](https://pepy.tech/badge/claude-secret-scan)](https://pepy.tech/project/claude-secret-scan)
 
-Security plugins for Claude Code and Cursor. This repository currently provides a secrets scanner plugin.
+## Security plugins for Claude Code and Cursor
+This repository currently provides a secrets scanner plugin.
 
 ## Motivation
 
