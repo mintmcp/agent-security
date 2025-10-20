@@ -1,3 +1,6 @@
+<img width="67" height="13" alt="image" src="https://github.com/user-attachments/assets/bf25f929-7095-4299-a77a-be0b6e3ee06a" />
+
+
 # Agent Security Plugins
 
 [![PyPI version](https://badge.fury.io/py/claude-secret-scan.svg)](https://badge.fury.io/py/claude-secret-scan)
