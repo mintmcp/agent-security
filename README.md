@@ -1,4 +1,7 @@
-<img width="642" height="106" alt="image" src="https://github.com/user-attachments/assets/9aee367d-3d66-491a-9e04-a67944cb1c4c" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/00dd06e9-8a2e-495a-8466-e68ed4c918d1">
+  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="https://github.com/user-attachments/assets/9aee367d-3d66-491a-9e04-a67944cb1c4c">
+</picture>
 
 [![PyPI version](https://badge.fury.io/py/claude-secret-scan.svg)](https://badge.fury.io/py/claude-secret-scan)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
